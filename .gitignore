@@ -1,0 +1,23 @@
+# Root ignores (mỗi thư mục con có thể có .gitignore riêng)
+
+# Node / frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+*.tsbuildinfo
+
+# Java / backend
+target/
+*.class
+
+# Env
+.env
+.env.*.local
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

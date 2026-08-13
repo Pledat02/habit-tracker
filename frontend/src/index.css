@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light mode — semantic color tokens as "R G B" for Tailwind alpha support */
+    --color-background: 248 250 252; /* slate-50 */
+    --color-surface: 255 255 255;
+    --color-surface-2: 241 245 249; /* slate-100 */
+    --color-border: 226 232 240; /* slate-200 */
+    --color-foreground: 15 23 42; /* slate-900 */
+    --color-muted: 100 116 139; /* slate-500 */
+
+    --color-primary: 13 148 136; /* teal-600 */
+    --color-primary-foreground: 255 255 255;
+    --color-secondary: 99 102 241; /* indigo-500 */
+    --color-secondary-foreground: 255 255 255;
+
+    --color-success: 22 163 74; /* green-600 */
+    --color-warning: 217 119 6; /* amber-600 */
+    --color-danger: 220 38 38; /* red-600 */
+  }
+
+  .dark {
+    --color-background: 2 6 23; /* slate-950 */
+    --color-surface: 15 23 42; /* slate-900 */
+    --color-surface-2: 30 41 59; /* slate-800 */
+    --color-border: 51 65 85; /* slate-700 */
+    --color-foreground: 241 245 249; /* slate-100 */
+    --color-muted: 148 163 184; /* slate-400 */
+
+    --color-primary: 45 212 191; /* teal-400 — brighter for dark contrast */
+    --color-primary-foreground: 2 6 23;
+    --color-secondary: 129 140 248; /* indigo-400 */
+    --color-secondary-foreground: 2 6 23;
+
+    --color-success: 74 222 128;
+    --color-warning: 251 191 36;
+    --color-danger: 248 113 113;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: 16px;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-heading;
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-surface border border-border rounded-2xl shadow-soft;
+  }
+
+  .focus-ring {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* Skeleton shimmer */
+  .skeleton {
+    @apply relative overflow-hidden bg-surface-2 rounded-lg;
+  }
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(90deg, transparent, rgb(var(--color-foreground) / 0.06), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 1.4s infinite;
+  }
+}
+
+/* Thin, unobtrusive scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-border));
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
