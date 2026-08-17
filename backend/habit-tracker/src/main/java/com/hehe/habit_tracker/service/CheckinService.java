@@ -11,13 +11,11 @@ import com.hehe.habit_tracker.dto.response.CheckinResponse;
 import com.hehe.habit_tracker.dto.response.CheckinResultResponse;
 import com.hehe.habit_tracker.entity.Checkin;
 import com.hehe.habit_tracker.entity.Habit;
-import com.hehe.habit_tracker.entity.Users;
 import com.hehe.habit_tracker.exception.AppException;
 import com.hehe.habit_tracker.exception.ErrorCode;
 import com.hehe.habit_tracker.mapper.CheckinMapper;
 import com.hehe.habit_tracker.repository.CheckinRepository;
 import com.hehe.habit_tracker.repository.HabitRepository;
-import com.hehe.habit_tracker.repository.UserRepository;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +23,8 @@ import lombok.experimental.FieldDefaults;
 
 /**
  * Checkin không có field user trực tiếp — chủ sở hữu suy ra qua checkin.habit.user.
- * Mọi method nhận `username` (từ JWT, xem CheckinController), không tin habitId
- * bất kỳ do client gửi: phải verify habit đó thuộc đúng người gọi trước khi thao tác.
+ * Mọi method nhận `userId` (từ claim JWT, xem CheckinController), không tra bảng users
+ * và không tin habitId client gửi mù: phải verify habit thuộc đúng người gọi trước khi thao tác.
  */
 @Service
 @RequiredArgsConstructor
@@ -35,12 +33,11 @@ public class CheckinService {
 
     CheckinRepository checkinRepository;
     HabitRepository habitRepository;
-    UserRepository userRepository;
     CheckinMapper checkinMapper;
     AchievementEngine achievementEngine;
 
-    public CheckinResultResponse createCheckin(CheckinCreationRequest request, String username) {
-        Habit habit = ownedHabit(request.habitId(), username);
+    public CheckinResultResponse createCheckin(CheckinCreationRequest request, Long userId) {
+        Habit habit = ownedHabit(request.habitId(), userId);
 
         LocalDate date = request.checkinDate() != null ? request.checkinDate() : LocalDate.now();
         if (checkinRepository.existsByHabitIdAndCheckinDate(habit.getId(), date)) {
@@ -64,61 +61,53 @@ public class CheckinService {
     }
 
     /** Tất cả check-in thuộc mọi habit của user này (Dashboard/Insights cần gộp toàn bộ). */
-    public List<CheckinResponse> getAllForUser(String username) {
-        Users user = currentUser(username);
-        return checkinRepository.findByHabitUserId(user.getId())
+    public List<CheckinResponse> getAllForUser(Long userId) {
+        return checkinRepository.findByHabitUserId(userId)
                 .stream()
                 .map(checkinMapper::toCheckinResponse)
                 .toList();
     }
 
-    public List<CheckinResponse> getCheckinsByHabit(Long habitId, String username) {
-        ownedHabit(habitId, username); // ném lỗi nếu habit không tồn tại hoặc không phải của user này
+    public List<CheckinResponse> getCheckinsByHabit(Long habitId, Long userId) {
+        ownedHabit(habitId, userId); // ném lỗi nếu habit không tồn tại hoặc không phải của user này
         return checkinRepository.findByHabitId(habitId)
                 .stream()
                 .map(checkinMapper::toCheckinResponse)
                 .toList();
     }
 
-    public CheckinResponse getCheckinById(Long id, String username) {
-        Checkin checkin = ownedCheckin(id, username);
+    public CheckinResponse getCheckinById(Long id, Long userId) {
+        Checkin checkin = ownedCheckin(id, userId);
         return checkinMapper.toCheckinResponse(checkin);
     }
 
-    public CheckinResponse updateCheckin(Long id, CheckinUpdateRequest request, String username) {
-        Checkin checkin = ownedCheckin(id, username);
+    public CheckinResponse updateCheckin(Long id, CheckinUpdateRequest request, Long userId) {
+        Checkin checkin = ownedCheckin(id, userId);
         if (request.note() != null) {
             checkin.setNote(request.note());
         }
         return checkinMapper.toCheckinResponse(checkinRepository.save(checkin));
     }
 
-    public void deleteCheckin(Long id, String username) {
-        Checkin checkin = ownedCheckin(id, username);
+    public void deleteCheckin(Long id, Long userId) {
+        Checkin checkin = ownedCheckin(id, userId);
         checkinRepository.delete(checkin);
     }
 
-    private Users currentUser(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-    }
-
-    /** Habit tồn tại và đúng của user này. Sai chủ -> coi như không tồn tại (404, không phải 403). */
-    private Habit ownedHabit(Long habitId, String username) {
-        Users user = currentUser(username);
+    /** Habit tồn tại và đúng của user này. So habit.getUser().getId() (id proxy, miễn phí) với userId. */
+    private Habit ownedHabit(Long habitId, Long userId) {
         Habit habit = habitRepository.findById(habitId)
                 .orElseThrow(() -> new AppException(ErrorCode.HABIT_NOT_FOUND));
-        if (!habit.getUser().getId().equals(user.getId())) {
+        if (!habit.getUser().getId().equals(userId)) {
             throw new AppException(ErrorCode.HABIT_NOT_FOUND);
         }
         return habit;
     }
 
-    private Checkin ownedCheckin(Long id, String username) {
-        Users user = currentUser(username);
+    private Checkin ownedCheckin(Long id, Long userId) {
         Checkin checkin = checkinRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CHECKIN_NOT_FOUND));
-        if (!checkin.getHabit().getUser().getId().equals(user.getId())) {
+        if (!checkin.getHabit().getUser().getId().equals(userId)) {
             throw new AppException(ErrorCode.CHECKIN_NOT_FOUND);
         }
         return checkin;

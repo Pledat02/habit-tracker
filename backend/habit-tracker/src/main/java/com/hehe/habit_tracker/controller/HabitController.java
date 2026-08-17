@@ -41,28 +41,28 @@ public class HabitController extends BaseController<HabitResponse> {
     @PostMapping
     public ApiResponse<HabitResponse> create(@Valid @RequestBody HabitCreationRequest request,
             @AuthenticationPrincipal Jwt jwt) {
-        return createSuccessResponse(habitService.createHabit(request, jwt.getSubject()));
+        return createSuccessResponse(habitService.createHabit(request, currentUserId(jwt)));
     }
 
     @GetMapping
     public ApiResponse<List<HabitResponse>> getAll(@AuthenticationPrincipal Jwt jwt) {
-        return readListSuccessResponse(habitService.getAllHabits(jwt.getSubject()));
+        return readListSuccessResponse(habitService.getAllHabits(currentUserId(jwt)));
     }
 
     @GetMapping("/{id}")
     public ApiResponse<HabitResponse> getById(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
-        return readSuccessResponse(habitService.getHabitById(id, jwt.getSubject()));
+        return readSuccessResponse(habitService.getHabitById(id, currentUserId(jwt)));
     }
 
     @PutMapping("/{id}")
     public ApiResponse<HabitResponse> update(@PathVariable Long id, @Valid @RequestBody HabitUpdateRequest request,
             @AuthenticationPrincipal Jwt jwt) {
-        return updateSuccessResponse(habitService.updateHabit(id, request, jwt.getSubject()));
+        return updateSuccessResponse(habitService.updateHabit(id, request, currentUserId(jwt)));
     }
 
     @DeleteMapping("/{id}")
     public ApiResponse<HabitResponse> delete(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
-        habitService.deleteHabit(id, jwt.getSubject());
+        habitService.deleteHabit(id, currentUserId(jwt));
         return deleteSuccessResponse();
     }
 }

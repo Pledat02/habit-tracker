@@ -15,9 +15,10 @@ class StreakCalculatorTest {
     private final StreakCalculator calc = new StreakCalculator();
 
     private Habit habitWithFrequency(String frequency) {
-        Habit h = new Habit();
-        h.setFrequency(frequency);
-        return h;
+        return Habit.builder()
+                .name("Test Habit")
+                .frequency(frequency)
+                .build();
     }
 
     @Test

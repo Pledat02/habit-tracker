@@ -39,36 +39,36 @@ public class CheckinController extends BaseController<CheckinResponse> {
     @PostMapping
     public ApiResponse<CheckinResultResponse> create(@Valid @RequestBody CheckinCreationRequest request,
             @AuthenticationPrincipal Jwt jwt) {
-        return ApiResponse.success(checkinService.createCheckin(request, jwt.getSubject()), 201);
+        return ApiResponse.success(checkinService.createCheckin(request, currentUserId(jwt)), 201);
     }
 
     /** Tất cả check-in thuộc mọi habit của chính user đang gọi (Dashboard/Insights). */
     @GetMapping("/me")
     public ApiResponse<List<CheckinResponse>> getMine(@AuthenticationPrincipal Jwt jwt) {
-        return readListSuccessResponse(checkinService.getAllForUser(jwt.getSubject()));
+        return readListSuccessResponse(checkinService.getAllForUser(currentUserId(jwt)));
     }
 
     /** Danh sách check-in của 1 habit. */
     @GetMapping("/habit/{habitId}")
     public ApiResponse<List<CheckinResponse>> getByHabit(@PathVariable Long habitId,
             @AuthenticationPrincipal Jwt jwt) {
-        return readListSuccessResponse(checkinService.getCheckinsByHabit(habitId, jwt.getSubject()));
+        return readListSuccessResponse(checkinService.getCheckinsByHabit(habitId, currentUserId(jwt)));
     }
 
     @GetMapping("/{id}")
     public ApiResponse<CheckinResponse> getById(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
-        return readSuccessResponse(checkinService.getCheckinById(id, jwt.getSubject()));
+        return readSuccessResponse(checkinService.getCheckinById(id, currentUserId(jwt)));
     }
 
     @PutMapping("/{id}")
     public ApiResponse<CheckinResponse> update(@PathVariable Long id,
             @Valid @RequestBody CheckinUpdateRequest request, @AuthenticationPrincipal Jwt jwt) {
-        return updateSuccessResponse(checkinService.updateCheckin(id, request, jwt.getSubject()));
+        return updateSuccessResponse(checkinService.updateCheckin(id, request, currentUserId(jwt)));
     }
 
     @DeleteMapping("/{id}")
     public ApiResponse<CheckinResponse> delete(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
-        checkinService.deleteCheckin(id, jwt.getSubject());
+        checkinService.deleteCheckin(id, currentUserId(jwt));
         return deleteSuccessResponse();
     }
 }

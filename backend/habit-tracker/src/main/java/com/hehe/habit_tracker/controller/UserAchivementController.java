@@ -41,29 +41,29 @@ public class UserAchivementController extends BaseController<UserAchivementRespo
     @PostMapping
     public ApiResponse<UserAchivementResponse> grant(@Valid @RequestBody UserAchivementCreationRequest request,
             @AuthenticationPrincipal Jwt jwt) {
-        return createSuccessResponse(userAchivementService.grant(request, jwt.getSubject()));
+        return createSuccessResponse(userAchivementService.grant(request, currentUserId(jwt)));
     }
 
     /** Tất cả thành tựu đã mở khoá của chính user đang gọi. */
     @GetMapping("/me")
     public ApiResponse<List<UserAchivementResponse>> getMine(@AuthenticationPrincipal Jwt jwt) {
-        return readListSuccessResponse(userAchivementService.getMine(jwt.getSubject()));
+        return readListSuccessResponse(userAchivementService.getMine(currentUserId(jwt)));
     }
 
     @GetMapping("/{id}")
     public ApiResponse<UserAchivementResponse> getById(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
-        return readSuccessResponse(userAchivementService.getById(id, jwt.getSubject()));
+        return readSuccessResponse(userAchivementService.getById(id, currentUserId(jwt)));
     }
 
     @PutMapping("/{id}")
     public ApiResponse<UserAchivementResponse> update(@PathVariable Long id,
             @Valid @RequestBody UserAchivementUpdateRequest request, @AuthenticationPrincipal Jwt jwt) {
-        return updateSuccessResponse(userAchivementService.update(id, request, jwt.getSubject()));
+        return updateSuccessResponse(userAchivementService.update(id, request, currentUserId(jwt)));
     }
 
     @DeleteMapping("/{id}")
     public ApiResponse<UserAchivementResponse> delete(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
-        userAchivementService.delete(id, jwt.getSubject());
+        userAchivementService.delete(id, currentUserId(jwt));
         return deleteSuccessResponse();
     }
 }

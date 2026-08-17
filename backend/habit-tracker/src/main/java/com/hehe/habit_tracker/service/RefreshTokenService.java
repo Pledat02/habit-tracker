@@ -57,10 +57,16 @@ public class RefreshTokenService {
     }
 
     /**
-     * Đổi refresh token cũ lấy refresh token mới (rotate) — gọi mỗi lần client xin access token mới.
-     * Token cũ bị vô hiệu ngay sau khi dùng: nếu ai đó dùng lại token cũ (đã bị rotate),
-     * đó là dấu hiệu token đã bị đánh cắp -> thu hồi TOÀN BỘ refresh token của user này,
-     * buộc đăng nhập lại trên mọi thiết bị.
+     * Đổi refresh token cũ lấy refresh token mới (rotate) — gọi mỗi lần client xin access token mới
+     * (mỗi F5 đều gọi, vì access token nằm trong RAM và mất khi tải lại trang).
+     *
+     * Rotate TẠI CHỖ: ghi đè hash + gia hạn trên CHÍNH dòng đang có, KHÔNG tạo dòng mới.
+     * -> mỗi phiên (thiết bị) chỉ tồn tại 1 dòng, F5 bao nhiêu lần cũng không phình bảng.
+     * Token cũ chết ngay vì hash của nó bị ghi đè khỏi DB (dùng lại -> không tìm thấy -> INVALID).
+     *
+     * Đánh đổi so với "insert dòng mới + revoke dòng cũ": mất khả năng phát hiện replay để
+     * "thu hồi toàn bộ thiết bị" (vì hash cũ không còn để đối chiếu). Bù lại bảng không phình
+     * theo số lần refresh — phù hợp với app này (token ở RAM nên refresh rất thường xuyên).
      */
     public RotateResult rotate(String rawToken) {
         if (rawToken == null || rawToken.isBlank()) {
@@ -70,31 +76,25 @@ public class RefreshTokenService {
         RefreshToken existing = refreshTokenRepository.findByTokenHash(hash(rawToken))
                 .orElseThrow(() -> new AppException(ErrorCode.REFRESH_TOKEN_INVALID));
 
-        if (existing.isRevoked()) {
-            // Token đã bị rotate/thu hồi trước đó mà vẫn có người dùng lại -> nghi bị đánh cắp.
-            refreshTokenRepository.revokeAllByUserId(existing.getUser().getId());
-            throw new AppException(ErrorCode.REFRESH_TOKEN_INVALID);
-        }
-        if (existing.getExpiresAt().isBefore(Instant.now())) {
+        if (existing.isRevoked() || existing.getExpiresAt().isBefore(Instant.now())) {
             throw new AppException(ErrorCode.REFRESH_TOKEN_INVALID);
         }
 
-        existing.setRevoked(true);
-        refreshTokenRepository.save(existing);
+        String newRawToken = generateRawToken();
+        existing.setTokenHash(hash(newRawToken));
+        existing.setExpiresAt(Instant.now().plusSeconds(refreshValidDuration));
+        refreshTokenRepository.save(existing); // UPDATE cùng dòng, không INSERT
 
-        String newRawToken = issue(existing.getUser());
         return new RotateResult(existing.getUser(), newRawToken);
     }
 
-    /** Logout: vô hiệu refresh token hiện tại. Im lặng nếu token không hợp lệ/không tồn tại. */
+    /** Logout: XOÁ hẳn dòng refresh token (không để lại dòng revoked). Im lặng nếu không tìm thấy. */
     public void revoke(String rawToken) {
         if (rawToken == null || rawToken.isBlank()) {
             return;
         }
-        refreshTokenRepository.findByTokenHash(hash(rawToken)).ifPresent(rt -> {
-            rt.setRevoked(true);
-            refreshTokenRepository.save(rt);
-        });
+        refreshTokenRepository.findByTokenHash(hash(rawToken))
+                .ifPresent(refreshTokenRepository::delete);
     }
 
     private String generateRawToken() {
