@@ -14,8 +14,10 @@ public record AchivementCreationRequest(
         @NotBlank(message = "name is required") String name,
         String description,
         String icon,
-        /** NULL với loại theo sự kiện (vd HOLIDAY_CHECKIN). */
+        /** Ngưỡng chính (STREAK: ngày, MULTI_STREAK: số habit). */
         Integer target,
+        /** Ngưỡng phụ (MULTI_STREAK: số ngày streak tối thiểu mỗi habit). */
+        Integer target2,
         // sortOrder KHÔNG nhận từ client: service tự đặt = max + 10 khi tạo.
         /** NULL => mặc định true (xử lý ở service/entity). */
         Boolean active

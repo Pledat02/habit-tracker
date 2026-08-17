@@ -9,12 +9,21 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+// Trước đây cả Habit VÀ IconHabit cùng khai @JoinColumn cho quan hệ 1-1 này
+// -> Hibernate tạo 2 cột FK (icon_id trên habits, habit_id trên icons) cho
+// đúng 1 quan hệ. Habit là owning side (icon_id) — IconHabit chỉ mappedBy,
+// không tự thêm cột.
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "icons")
 public class IconHabit {
@@ -25,8 +34,7 @@ public class IconHabit {
     private String iconColor;
     private String iconRef;
 
-    @OneToOne
-    @JoinColumn(name = "habit_id")
+    @OneToOne(mappedBy = "iconHabit")
     private Habit habit;
     private boolean isActived;
     @CreationTimestamp

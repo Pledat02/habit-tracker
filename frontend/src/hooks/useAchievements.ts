@@ -7,7 +7,7 @@ export function useAchievements() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['achievements', user?.id],
-    queryFn: () => achievementsApi.list(user!.id),
+    queryFn: () => achievementsApi.list(),
     enabled: !!user,
   });
 }

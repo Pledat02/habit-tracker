@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { HabitFormModal } from '@/components/HabitFormModal';
 import { useAchievementShare } from '@/context/AchievementContext';
 import type { Habit } from '@/lib/types';
-import { cn, currentStreak } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 type Filter = 'all' | 'active' | 'paused';
 
@@ -16,7 +16,7 @@ export function HabitsList() {
   const { data: habits, isLoading } = useHabits();
   const { data: checkins } = useCheckins();
   const toggle = useToggleCheckin();
-  const { celebrateStreak } = useAchievementShare();
+  const { celebrateNewAchievements } = useAchievementShare();
   const [filter, setFilter] = useState<Filter>('all');
   const [createOpen, setCreateOpen] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -30,11 +30,10 @@ export function HabitsList() {
 
   const handleToggle = async (habit: Habit) => {
     if (!checkins) return;
-    const nextStreak = currentStreak(habit, checkins) + 1;
     setPendingId(habit.id);
     try {
       const res = await toggle.mutateAsync({ habit, checkins });
-      if (res.action === 'added') await celebrateStreak(habit, nextStreak);
+      if (res.action === 'added') celebrateNewAchievements(res.newAchievements, habit);
     } finally {
       setPendingId(null);
     }
@@ -86,13 +85,14 @@ export function HabitsList() {
             action={filter === 'all' ? <Button onClick={() => setCreateOpen(true)}>Tạo habit đầu tiên</Button> : undefined}
           />
         ) : (
-          filtered.map((habit) => (
+          filtered.map((habit, index) => (
             <HabitCard
               key={habit.id}
               habit={habit}
               checkins={checkins ?? []}
               onToggle={handleToggle}
               pending={pendingId === habit.id}
+              index={index}
             />
           ))
         )}

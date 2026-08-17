@@ -17,10 +17,21 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
+// Cùng lý do như Users: @Data một mình (không @NoArgsConstructor) chỉ sinh constructor
+// theo các field @NonNull (name, frequency) -> Hibernate THIẾU constructor rỗng để
+// hydrate entity từ DB, chỉ lộ ra lúc chạy thật (log HHH000182), không lỗi lúc compile.
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@RequiredArgsConstructor
 @Entity
 @Table(name = "habits")
 public class Habit {
@@ -33,8 +44,11 @@ public class Habit {
     private String frequency;
     private String note;
     private LocalTime remindTime;
+    @Builder.Default
     private boolean isPaused = false;
+    @Builder.Default
     private int bestStreak = 0;
+    @Builder.Default
     private int currentStreak = 0;
     private LocalDate lastCheckinDate;
     @OneToOne

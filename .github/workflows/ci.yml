@@ -1,0 +1,40 @@
+name: Backend CI
+
+# Chạy khi push hoặc mở PR. Chưa lọc nhánh — siết lại sau nếu cần.
+on:
+  push:
+  pull_request:
+
+# Push mới vào cùng nhánh sẽ huỷ lần chạy cũ đang dở.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        # Project Gradle nằm sâu trong repo.
+        working-directory: backend/habit-tracker
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # Chạy đầy đủ test. Integration test dùng Testcontainers (Postgres thật trong
+      # Docker) -> KHÔNG đụng Supabase, và ubuntu-latest runner có sẵn Docker.
+      # Test config tự chứa (src/test/resources/application.yaml) nên không cần secret.
+      - name: Build & test
+        run: ./gradlew build --no-daemon

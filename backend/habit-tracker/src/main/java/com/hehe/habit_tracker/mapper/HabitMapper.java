@@ -13,9 +13,14 @@ import com.hehe.habit_tracker.entity.Habit;
 
 @Mapper(componentModel = "spring")
 public interface HabitMapper {
+    // request.icon()/iconColor() KHÔNG có field đích tương ứng trên Habit (chỉ có
+    // Habit.iconHabit, một entity riêng) -> MapStruct tự bỏ qua 2 field đó, không lỗi.
+    // HabitService tự tạo/gắn IconHabit sau khi có instance Habit.
     Habit toHabit(HabitCreationRequest request);
 
     @Mapping(source = "paused", target = "isPaused")
+    @Mapping(source = "iconHabit.icon", target = "icon")
+    @Mapping(source = "iconHabit.iconColor", target = "iconColor")
     HabitResponse toHabitResponse(Habit habit);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

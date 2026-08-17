@@ -10,14 +10,14 @@ import { HabitFormModal } from '@/components/HabitFormModal';
 import { useAuth } from '@/context/AuthContext';
 import { useAchievementShare } from '@/context/AchievementContext';
 import type { Habit } from '@/lib/types';
-import { currentStreak, isScheduledOn, toDateKey } from '@/lib/utils';
+import { isScheduledOn, toDateKey } from '@/lib/utils';
 
 export function Dashboard() {
   const { user } = useAuth();
   const { data: habits, isLoading: habitsLoading } = useHabits();
   const { data: checkins, isLoading: checkinsLoading } = useCheckins();
   const toggle = useToggleCheckin();
-  const { celebrateStreak } = useAchievementShare();
+  const { celebrateNewAchievements } = useAchievementShare();
   const [createOpen, setCreateOpen] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
 
@@ -39,12 +39,10 @@ export function Dashboard() {
 
   const handleToggle = async (habit: Habit) => {
     if (!checkins) return;
-    // Streak the habit will reach if this check-in is an "add".
-    const nextStreak = currentStreak(habit, checkins) + 1;
     setPendingId(habit.id);
     try {
       const res = await toggle.mutateAsync({ habit, checkins });
-      if (res.action === 'added') await celebrateStreak(habit, nextStreak);
+      if (res.action === 'added') celebrateNewAchievements(res.newAchievements, habit);
     } finally {
       setPendingId(null);
     }
@@ -112,13 +110,14 @@ export function Dashboard() {
             description="Tận hưởng ngày nghỉ, hoặc thêm một habit mới cho hôm nay."
           />
         ) : (
-          todays.map((habit) => (
+          todays.map((habit, index) => (
             <HabitCard
               key={habit.id}
               habit={habit}
               checkins={checkins ?? []}
               onToggle={handleToggle}
               pending={pendingId === habit.id}
+              index={index}
             />
           ))
         )}

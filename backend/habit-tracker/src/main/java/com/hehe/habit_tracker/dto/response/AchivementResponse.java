@@ -17,6 +17,7 @@ public record AchivementResponse(
         String description,
         String icon,
         Integer target,
+        Integer target2,
         int sortOrder,
         boolean active,
         Instant createdAt,

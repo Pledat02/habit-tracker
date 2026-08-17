@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { habitsApi, checkinsApi } from '@/lib/resources';
-import type { Checkin, Habit } from '@/lib/types';
+import type { Achievement, Checkin, Habit } from '@/lib/types';
 import { toDateKey } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -9,7 +9,7 @@ export function useHabits() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['habits', user?.id],
-    queryFn: () => habitsApi.list(user!.id),
+    queryFn: () => habitsApi.list(),
     enabled: !!user,
   });
 }
@@ -42,11 +42,9 @@ export function useHabitCheckins(habitId: string | undefined) {
 
 export function useCreateHabit() {
   const qc = useQueryClient();
-  const { user } = useAuth();
   const toast = useToast();
   return useMutation({
-    mutationFn: (data: Omit<Habit, 'id' | 'createdAt' | 'userId'>) =>
-      habitsApi.create({ ...data, userId: user!.id }),
+    mutationFn: (data: Omit<Habit, 'id' | 'createdAt' | 'userId'>) => habitsApi.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['habits'] });
       toast.success('Đã tạo habit mới');
@@ -102,13 +100,16 @@ export function useToggleCheckin() {
       const existing = checkins.find((c) => c.habitId === habit.id && c.date === date);
       if (existing) {
         await checkinsApi.remove(existing.id);
-        return { action: 'removed' as const };
+        return { action: 'removed' as const, newAchievements: [] as Achievement[] };
       }
-      await checkinsApi.create({ habitId: habit.id, date, note });
-      return { action: 'added' as const };
+      // Engine backend tự cấp thành tựu ngay khi check-in — trả về ở newAchievements.
+      const res = await checkinsApi.create({ habitId: habit.id, date, note });
+      return { action: 'added' as const, newAchievements: res.newAchievements };
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['checkins'] });
+      // Có thành tựu mới -> cập nhật lại danh sách thành tựu ở trang Achievements.
+      if (res.newAchievements.length > 0) qc.invalidateQueries({ queryKey: ['achievements'] });
     },
     onError: () => toast.error('Không cập nhật được check-in'),
   });

@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Secrets (nạp qua spring.config.import) — KHÔNG commit ###
+secrets.properties

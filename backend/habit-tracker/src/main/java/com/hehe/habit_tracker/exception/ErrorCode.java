@@ -20,6 +20,7 @@ public enum ErrorCode {
     USER_ACHIEVEMENT_NOT_FOUND(404, "User achievement not found", HttpStatus.NOT_FOUND),
     USER_ACHIEVEMENT_EXISTED(400, "Achievement already unlocked", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(401, "Unauthenticated", HttpStatus.UNAUTHORIZED),
+    REFRESH_TOKEN_INVALID(401, "Invalid or expired refresh token", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(403, "You do not have permission", HttpStatus.FORBIDDEN),
     INVALID_REQUEST(400, "Invalid request data", HttpStatus.BAD_REQUEST),
     ;

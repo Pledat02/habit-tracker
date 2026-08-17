@@ -39,12 +39,29 @@ export interface Checkin {
 
 export type Milestone = 7 | 30 | 100 | 365;
 
+/**
+ * Bản ghi thành tựu ĐÃ MỞ KHOÁ của user hiện tại (UserAchivement bên backend).
+ * `milestone` được suy ra CLIENT-SIDE từ `code` (vd 'STREAK_30' -> 30) — backend
+ * không trả số milestone trực tiếp, chỉ trả code + các field hiển thị.
+ * habitId = null nghĩa là thành tựu account-level (chưa dùng tới ở bản này).
+ */
 export interface Achievement {
   id: string;
-  userId: string;
-  habitId: string;
-  type: 'streak';
-  milestone: number; // one of Milestone
+  habitId: string | null;
+  code: string;
+  milestone: number | null;
   unlockedAt: string; // ISO
   shared: boolean;
+}
+
+/** Định nghĩa 1 loại thành tựu trong catalog (Achivement bên backend, đọc-only ở đây). */
+export interface AchievementDefinition {
+  id: string;
+  code: string;
+  category: 'PER_HABIT' | 'ACCOUNT';
+  type: string;
+  name: string;
+  description: string;
+  icon: string;
+  target: number | null;
 }

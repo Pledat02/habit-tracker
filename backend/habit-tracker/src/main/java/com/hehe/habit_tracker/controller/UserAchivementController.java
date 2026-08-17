@@ -2,6 +2,8 @@ package com.hehe.habit_tracker.controller;
 
 import java.util.List;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,7 +25,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-/** Mở khoá (cấp) thành tựu cho user + đọc danh sách đã mở khoá. */
+/**
+ * Mở khoá (cấp) thành tựu cho CHÍNH user đang gọi + đọc danh sách đã mở khoá.
+ * Chủ sở hữu LUÔN xác định từ claim 'sub' của JWT — không nhận userId từ client.
+ */
 @RestController
 @RequestMapping("/api/v1/user-achievements")
 @RequiredArgsConstructor
@@ -32,32 +37,33 @@ public class UserAchivementController extends BaseController<UserAchivementRespo
 
     UserAchivementService userAchivementService;
 
-    /** Cấp một thành tựu cho user. */
+    /** Cấp một thành tựu cho chính user đang gọi. */
     @PostMapping
-    public ApiResponse<UserAchivementResponse> grant(@Valid @RequestBody UserAchivementCreationRequest request) {
-        return createSuccessResponse(userAchivementService.grant(request));
+    public ApiResponse<UserAchivementResponse> grant(@Valid @RequestBody UserAchivementCreationRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
+        return createSuccessResponse(userAchivementService.grant(request, jwt.getSubject()));
     }
 
-    /** Tất cả thành tựu đã mở khoá của 1 user. */
-    @GetMapping("/user/{userId}")
-    public ApiResponse<List<UserAchivementResponse>> getByUser(@PathVariable Long userId) {
-        return ApiResponse.success(userAchivementService.getByUser(userId), 200);
+    /** Tất cả thành tựu đã mở khoá của chính user đang gọi. */
+    @GetMapping("/me")
+    public ApiResponse<List<UserAchivementResponse>> getMine(@AuthenticationPrincipal Jwt jwt) {
+        return readListSuccessResponse(userAchivementService.getMine(jwt.getSubject()));
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<UserAchivementResponse> getById(@PathVariable Long id) {
-        return readSuccessResponse(userAchivementService.getById(id));
+    public ApiResponse<UserAchivementResponse> getById(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return readSuccessResponse(userAchivementService.getById(id, jwt.getSubject()));
     }
 
     @PutMapping("/{id}")
     public ApiResponse<UserAchivementResponse> update(@PathVariable Long id,
-            @Valid @RequestBody UserAchivementUpdateRequest request) {
-        return updateSuccessResponse(userAchivementService.update(id, request));
+            @Valid @RequestBody UserAchivementUpdateRequest request, @AuthenticationPrincipal Jwt jwt) {
+        return updateSuccessResponse(userAchivementService.update(id, request, jwt.getSubject()));
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<UserAchivementResponse> delete(@PathVariable Long id) {
-        userAchivementService.delete(id);
+    public ApiResponse<UserAchivementResponse> delete(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        userAchivementService.delete(id, jwt.getSubject());
         return deleteSuccessResponse();
     }
 }

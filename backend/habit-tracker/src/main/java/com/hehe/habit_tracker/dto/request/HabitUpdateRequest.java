@@ -9,6 +9,8 @@ public record HabitUpdateRequest(
         String frequency,
         String note,
         LocalTime remindTime,
-        Boolean isPaused
+        Boolean isPaused,
+        String icon,
+        String iconColor
 ) {
 }

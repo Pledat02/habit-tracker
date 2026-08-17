@@ -1,5 +1,7 @@
 package com.hehe.habit_tracker.common;
 
+import java.util.List;
+
 public abstract class BaseController<T> {
 
     // for create
@@ -9,6 +11,11 @@ public abstract class BaseController<T> {
 
     // for read
     protected ApiResponse<T> readSuccessResponse(T data) {
+        return ApiResponse.success(data, 200);
+    }
+
+    // for read list
+    protected ApiResponse<List<T>> readListSuccessResponse(List<T> data) {
         return ApiResponse.success(data, 200);
     }
 

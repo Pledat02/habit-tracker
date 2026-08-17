@@ -14,6 +14,7 @@ public record AchivementUpdateRequest(
         String description,
         String icon,
         Integer target,
+        Integer target2,
         Integer sortOrder,
         Boolean active
 ) {

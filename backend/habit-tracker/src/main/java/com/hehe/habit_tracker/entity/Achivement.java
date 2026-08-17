@@ -16,13 +16,19 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * Catalog (định nghĩa) của thành tựu — dữ liệu tĩnh, seed bằng migration.
- * KHÔNG lưu "ai mở khóa": việc đó nằm ở {@link UserAchivement}.
+ * Catalog (định nghĩa) của thành tựu — dữ liệu tĩnh, seed lúc khởi động (xem
+ * config/AchievementSeeder.java). KHÔNG lưu "ai mở khóa": việc đó nằm ở {@link UserAchivement}.
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "achivements")
 public class Achivement {
@@ -54,14 +60,19 @@ public class Achivement {
     /** Lucide icon name: 'Flame', 'Trophy'... */
     private String icon;
 
-    /** Ngưỡng chính; NULL với loại theo sự kiện (vd HOLIDAY_CHECKIN). */
+    /** Ngưỡng chính. STREAK: số ngày. MULTI_STREAK: số habit cần đạt. */
     private Integer target;
+
+    /** Ngưỡng phụ (chỉ vài loại). MULTI_STREAK: số ngày streak tối thiểu mỗi habit phải đạt. */
+    private Integer target2;
 
     /** Thứ tự hiển thị trên UI (bước nhảy 10 để dễ chèn về sau). */
     @Column(nullable = false)
+    @Builder.Default
     private int sortOrder = 0;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = true;
 
     @CreationTimestamp

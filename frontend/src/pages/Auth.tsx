@@ -5,7 +5,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { USING_MOCK } from '@/lib/apiClient';
 
 type Mode = 'login' | 'register';
 
@@ -131,12 +130,6 @@ export function Auth() {
             <GoogleIcon /> Đăng nhập với Google
           </Button>
         </form>
-
-        {USING_MOCK && mode === 'login' && (
-          <p className="mt-4 rounded-xl bg-surface-2 px-4 py-3 text-center text-xs text-muted">
-            Tài khoản demo: <span className="font-medium text-foreground">demo@habit.app</span> / <span className="font-medium text-foreground">demo1234</span>
-          </p>
-        )}
 
         <p className="mt-6 text-center text-sm text-muted">
           {mode === 'login' ? 'Chưa có tài khoản?' : 'Đã có tài khoản?'}{' '}

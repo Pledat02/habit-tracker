@@ -1,0 +1,27 @@
+# Config RIÊNG cho test — shadow application.yaml chính (test classpath ưu tiên).
+# KHÔNG import secrets.properties, KHÔNG trỏ Supabase: datasource do Testcontainers
+# cấp qua @ServiceConnection (xem TestcontainersConfig). Các giá trị dưới chỉ để
+# context bind được mà không cần biến môi trường thật.
+spring:
+    jpa:
+        hibernate:
+            ddl-auto: create-drop
+        show-sql: false
+
+    security:
+        oauth2:
+            client:
+                registration:
+                    google:
+                        client-id: test-client-id
+                        client-secret: test-client-secret
+                        scope: openid,email,profile
+
+jwt:
+    validDuration: 3600
+    refreshValidDuration: 2592000
+
+app:
+    frontend-oauth2-redirect-uri: http://localhost:5173/oauth2/callback
+    cookie-secure: false
+    frontend-origin: http://localhost:5173

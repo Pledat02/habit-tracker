@@ -29,14 +29,23 @@ public class UserService {
     PasswordEncoder passwordEncoder;
 
     public UserCreationResponse createUser(UserCreationRequest request) {
-        if (userRepository.existsByUsername(request.username())) {
-            throw new AppException(ErrorCode.USER_EXISTED);
-        }
         if (userRepository.existsByEmail(request.email())) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
 
-        Users user = userMapper.toUsers(request);
+        // Username không bắt buộc từ client (form frontend không thu trường này) ->
+        // tự sinh từ phần trước '@' của email khi bỏ trống.
+        String username = (request.username() == null || request.username().isBlank())
+                ? generateUniqueUsername(emailLocalPart(request.email()))
+                : request.username();
+        if (userRepository.existsByUsername(username)) {
+            throw new AppException(ErrorCode.USER_EXISTED);
+        }
+
+        // Dựng lại request với username đã chốt (KHÔNG thể gọi mapper trực tiếp với
+        // username null: Users.username là @NonNull, mapper sẽ ném NPE ngay khi tạo).
+        Users user = userMapper.toUsers(
+                new UserCreationRequest(username, request.email(), request.password(), request.role()));
         user.setPassword(passwordEncoder.encode(request.password()));
         if (request.role() != null && !request.role().isBlank()) {
             try {
@@ -61,6 +70,32 @@ public class UserService {
         Users user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         return userMapper.toUserCreationResponse(user);
+    }
+
+    /** Dùng cho GET /users/me — username lấy từ claim 'sub' của JWT đã xác thực (KHÔNG nhận từ client). */
+    public UserCreationResponse getCurrentUser(String username) {
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return userMapper.toUserCreationResponse(user);
+    }
+
+    /** Tự sinh username duy nhất từ 1 chuỗi gợi ý (email, tên...) — dùng khi không có username thật. */
+    public String generateUniqueUsername(String seed) {
+        String base = seed.replaceAll("[^a-zA-Z0-9._-]", "").toLowerCase();
+        if (base.isBlank()) {
+            base = "user";
+        }
+        String candidate = base;
+        int suffix = 1;
+        while (userRepository.existsByUsername(candidate)) {
+            candidate = base + suffix++;
+        }
+        return candidate;
+    }
+
+    private String emailLocalPart(String email) {
+        int at = email.indexOf('@');
+        return at > 0 ? email.substring(0, at) : email;
     }
 
     public UserCreationResponse updateUser(Long id, UserUpdateRequest request) {

@@ -1,16 +1,18 @@
 import { useState, type ReactNode } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { CheckCircle2, Plus, Trophy } from 'lucide-react';
 import { NAV_ITEMS } from './nav';
 import { cn } from '@/lib/utils';
 import { HabitFormModal } from '@/components/HabitFormModal';
-import { USING_MOCK } from '@/lib/apiClient';
 
 /** Responsive shell: fixed left sidebar on desktop, bottom nav on mobile,
  *  plus a floating create button. */
 export function AppShell({ children }: { children: ReactNode }) {
   const [createOpen, setCreateOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const reduceMotion = useReducedMotion();
 
   return (
     <div className="min-h-[100dvh] bg-background">
@@ -67,12 +69,19 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Main column */}
       <div className="lg:pl-64">
-        {USING_MOCK && (
-          <div className="border-b border-warning/30 bg-warning/10 px-4 py-1.5 text-center text-xs text-warning">
-            Chế độ demo · dữ liệu lưu trong trình duyệt (localStorage). Đặt <code>VITE_API_BASE_URL</code> để dùng backend thật.
-          </div>
-        )}
-        <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-5 sm:px-6 lg:pb-10 lg:pt-8">{children}</main>
+        <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-5 sm:px-6 lg:pb-10 lg:pt-8">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -8 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
 
       {/* Mobile bottom nav */}

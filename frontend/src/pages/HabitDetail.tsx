@@ -38,6 +38,7 @@ import {
   frequencyLabel,
   longestStreak,
   milestoneFor,
+  streakUnit,
   toDateKey,
 } from '@/lib/utils';
 
@@ -49,7 +50,7 @@ export function HabitDetail() {
   const del = useDeleteHabit();
   const update = useUpdateHabit();
   const toggle = useToggleCheckin();
-  const { celebrateStreak, shareHabitStreak } = useAchievementShare();
+  const { celebrateNewAchievements, shareHabitStreak } = useAchievementShare();
 
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -103,7 +104,7 @@ export function HabitDetail() {
     try {
       const res = await toggle.mutateAsync({ habit, checkins, note: doneToday ? '' : note });
       setNote('');
-      if (res.action === 'added') await celebrateStreak(habit, stats.cur + 1);
+      if (res.action === 'added') celebrateNewAchievements(res.newAchievements, habit);
     } finally {
       setToggling(false);
     }
@@ -120,6 +121,7 @@ export function HabitDetail() {
   }
 
   const color = habit.color;
+  const unit = streakUnit(habit.frequency);
 
   return (
     <div className="space-y-6">
@@ -180,7 +182,7 @@ export function HabitDetail() {
         <StatCard
           icon={<Flame className="h-5 w-5" />}
           label="Streak hiện tại"
-          value={`${stats.cur} ngày`}
+          value={`${stats.cur} ${unit}`}
           accent="primary"
           action={
             stats.cur > 0 ? (
@@ -194,7 +196,7 @@ export function HabitDetail() {
             ) : undefined
           }
         />
-        <StatCard icon={<Trophy className="h-5 w-5" />} label="Dài nhất" value={`${stats.best} ngày`} accent="warning" />
+        <StatCard icon={<Trophy className="h-5 w-5" />} label="Dài nhất" value={`${stats.best} ${unit}`} accent="warning" />
         <StatCard icon={<Check className="h-5 w-5" />} label="Tổng check-in" value={`${stats.total}`} accent="success" />
         <StatCard icon={<BarChartMini />} label="Tỷ lệ 30 ngày" value={`${stats.rate}%`} accent="secondary" />
       </section>

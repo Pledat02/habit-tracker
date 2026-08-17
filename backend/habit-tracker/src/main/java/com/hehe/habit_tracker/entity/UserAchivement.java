@@ -13,7 +13,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Bản ghi MỞ KHÓA: user nào đạt thành tựu nào, lúc nào.
@@ -21,6 +24,9 @@ import lombok.Data;
  * habit != null → thành tựu gắn với 1 habit cụ thể (PER_HABIT).
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(
     name = "user_achivements",
@@ -57,5 +63,6 @@ public class UserAchivement {
     @CreationTimestamp
     private Instant unlockedAt;
 
+    @Builder.Default
     private boolean shared = false;
 }

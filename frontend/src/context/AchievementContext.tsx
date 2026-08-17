@@ -1,23 +1,16 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import type { Achievement, Habit } from '@/lib/types';
-import { achievementsApi } from '@/lib/resources';
 import { useAuth } from './AuthContext';
-import {
-  MILESTONE_META,
-  highestMilestoneReached,
-  isMilestone,
-  type MilestoneValue,
-} from '@/lib/achievements';
+import { MILESTONE_META, highestMilestoneReached, type MilestoneValue } from '@/lib/achievements';
 import type { ShareCardData } from '@/components/ShareCard';
 import { AchievementModal, type SharePayload } from '@/components/AchievementModal';
 
 interface AchievementCtx {
-  /** Auto-trigger after a successful check-in. Shows congrats modal only for a
-   *  newly reached (not previously recorded) milestone. */
-  celebrateStreak: (habit: Habit, newStreak: number) => Promise<void>;
+  /** Sau check-in: hiện chúc mừng cho các thành tựu BACKEND vừa cấp (engine).
+   *  Không còn tự tính/cấp ở client — chỉ hiển thị. */
+  celebrateNewAchievements: (newAchievements: Achievement[], habit: Habit) => void;
   /** Manual share of a habit's current streak (from Habit Detail). */
-  shareHabitStreak: (habit: Habit, streak: number) => Promise<void>;
+  shareHabitStreak: (habit: Habit, streak: number) => void;
   /** Manual share of an aggregate recap (from Insights). */
   shareRecap: (data: ShareCardData, shareText: string) => void;
   /** Re-share an already unlocked achievement (from Achievements page). */
@@ -28,7 +21,6 @@ const Ctx = createContext<AchievementCtx | null>(null);
 
 export function AchievementProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [payload, setPayload] = useState<SharePayload | null>(null);
   const userName = user?.name ?? 'Bạn';
@@ -50,84 +42,39 @@ export function AchievementProvider({ children }: { children: ReactNode }) {
     [userName],
   );
 
-  /** Find or create the achievement record for a habit+milestone.
-   *  `isNew` distinguishes a freshly unlocked milestone from a previously
-   *  recorded one (so we don't re-open the congrats modal on reload). */
-  const ensureAchievement = useCallback(
-    async (
-      habit: Habit,
-      milestone: MilestoneValue,
-    ): Promise<{ record: Achievement; isNew: boolean } | null> => {
-      if (!user) return null;
-      const existing = await achievementsApi.list(user.id);
-      const found = existing.find(
-        (a) => a.habitId === habit.id && Number(a.milestone) === milestone && a.type === 'streak',
-      );
-      if (found) return { record: found, isNew: false };
-      const created = await achievementsApi.create({
-        userId: user.id,
-        habitId: habit.id,
-        type: 'streak',
-        milestone,
-        unlockedAt: new Date().toISOString(),
-        shared: false,
-      });
-      qc.invalidateQueries({ queryKey: ['achievements'] });
-      return { record: created, isNew: true };
-    },
-    [user, qc],
-  );
-
-  const celebrateStreak = useCallback(
-    async (habit: Habit, newStreak: number) => {
-      if (!isMilestone(newStreak) || !user) return;
-      let result: { record: Achievement; isNew: boolean } | null = null;
-      try {
-        result = await ensureAchievement(habit, newStreak);
-      } catch {
-        // Achievement API failed — still congratulate, just can't persist/stats.
-        result = null;
-      }
-      // Only show the modal if this milestone was newly unlocked (avoid re-show on reload).
-      if (result && !result.isNew) return;
-      const meta = MILESTONE_META[newStreak];
+  const celebrateNewAchievements = useCallback(
+    (newAchievements: Achievement[], habit: Habit) => {
+      // Chỉ hiện 1 modal cho cái "cao" nhất vừa mở khoá (nhiều mốc cùng lúc thì lấy mốc lớn nhất).
+      const withMilestone = newAchievements.filter((a) => a.milestone != null);
+      if (withMilestone.length === 0) return;
+      const top = withMilestone.reduce((best, a) => (a.milestone! > best.milestone! ? a : best));
+      const milestone = top.milestone as MilestoneValue;
+      const meta = MILESTONE_META[milestone] ?? MILESTONE_META[7];
       setPayload({
-        data: buildStreakData(habit, newStreak),
+        data: buildStreakData(habit, milestone),
         modalTitle: `Chúc mừng! Mốc ${meta.label}`,
         celebrate: true,
-        shareTitle: `Streak ${newStreak} ngày — ${habit.name}`,
-        shareText: `Mình vừa đạt chuỗi ${newStreak} ngày "${habit.name}" trên Habit Tracker! 🔥`,
-        achievementId: result?.record.id,
+        shareTitle: `Streak ${milestone} ngày — ${habit.name}`,
+        shareText: `Mình vừa đạt chuỗi ${milestone} ngày "${habit.name}" trên Habit Tracker! 🔥`,
+        achievementId: top.id,
       });
       setOpen(true);
     },
-    [user, ensureAchievement, buildStreakData],
+    [buildStreakData],
   );
 
   const shareHabitStreak = useCallback(
-    async (habit: Habit, streak: number) => {
-      let achievementId: string | undefined;
-      // If the current streak is (or passed) a milestone, make sure it's recorded.
-      const reached = highestMilestoneReached(streak);
-      if (reached) {
-        try {
-          const res = await ensureAchievement(habit, reached);
-          achievementId = res?.record.id;
-        } catch {
-          /* ignore */
-        }
-      }
+    (habit: Habit, streak: number) => {
       setPayload({
         data: buildStreakData(habit, streak),
         modalTitle: 'Chia sẻ thành tựu',
         celebrate: false,
         shareTitle: `Streak ${streak} ngày — ${habit.name}`,
         shareText: `Chuỗi ${streak} ngày "${habit.name}" trên Habit Tracker! 🔥`,
-        achievementId,
       });
       setOpen(true);
     },
-    [ensureAchievement, buildStreakData],
+    [buildStreakData],
   );
 
   const shareRecap = useCallback((data: ShareCardData, shareText: string) => {
@@ -143,11 +90,11 @@ export function AchievementProvider({ children }: { children: ReactNode }) {
 
   const reshareAchievement = useCallback(
     (achievement: Achievement, habit: Habit | undefined) => {
-      const m = achievement.milestone as MilestoneValue;
+      const m = (achievement.milestone ?? 7) as MilestoneValue;
       const meta = MILESTONE_META[m] ?? MILESTONE_META[7];
       const data: ShareCardData = {
         title: habit?.name ?? 'Thói quen',
-        bigValue: String(achievement.milestone),
+        bigValue: String(achievement.milestone ?? ''),
         bigLabel: 'ngày streak',
         caption: meta.tagline,
         iconName: meta.icon,
@@ -168,8 +115,8 @@ export function AchievementProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<AchievementCtx>(
-    () => ({ celebrateStreak, shareHabitStreak, shareRecap, reshareAchievement }),
-    [celebrateStreak, shareHabitStreak, shareRecap, reshareAchievement],
+    () => ({ celebrateNewAchievements, shareHabitStreak, shareRecap, reshareAchievement }),
+    [celebrateNewAchievements, shareHabitStreak, shareRecap, reshareAchievement],
   );
 
   return (

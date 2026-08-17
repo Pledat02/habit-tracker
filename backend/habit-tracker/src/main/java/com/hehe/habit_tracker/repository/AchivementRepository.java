@@ -17,6 +17,9 @@ public interface AchivementRepository extends JpaRepository<Achivement, Long> {
 
     List<Achivement> findAllByOrderBySortOrderAsc();
 
+    /** Các định nghĩa đang bật của 1 loại luật — engine dùng để đánh giá theo từng type. */
+    List<Achivement> findByTypeAndActiveTrue(com.hehe.habit_tracker.common.AchievementType type);
+
     /** Dòng có sortOrder lớn nhất — để service tính vị trí kế tiếp (max + 10). */
     Optional<Achivement> findFirstByOrderBySortOrderDesc();
 }
