@@ -16,5 +16,12 @@ public interface CheckinRepository extends JpaRepository<Checkin, Long> {
     /** Tất cả check-in thuộc các habit của 1 user — điều hướng qua checkin.habit.user.id. */
     List<Checkin> findByHabitUserId(Long userId);
 
+    /**
+     * Check-in của 1 user trong khoảng ngày [from, to] (bao gồm 2 đầu). Dùng cho /checkins/me
+     * có lọc thời gian: chặn payload theo thời gian thay vì trả toàn bộ lịch sử. Tận dụng
+     * unique index (habit_id, checkin_date) sẵn có để range-scan theo ngày trong từng habit.
+     */
+    List<Checkin> findByHabitUserIdAndCheckinDateBetween(Long userId, LocalDate from, LocalDate to);
+
     boolean existsByHabitIdAndCheckinDate(Long habitId, LocalDate checkinDate);
 }

@@ -1,4 +1,5 @@
 import { api } from './apiClient';
+import { toDateKey } from './utils';
 import type { Achievement, AchievementDefinition, Checkin, Habit, User } from './types';
 
 // Thin resource layer over the generic client. Mỗi API tự dịch qua lại giữa shape
@@ -108,8 +109,18 @@ export interface CheckinResult {
 export const checkinsApi = {
   listByHabit: (habitId: string) =>
     api.get<BackendCheckin[]>(`/api/v1/checkins/habit/${habitId}`).then((rows) => rows.map(toCheckin)),
-  /** Tất cả check-in của user hiện tại (mọi habit gộp lại) — dùng cho Dashboard/Insights. */
-  listAll: () => api.get<BackendCheckin[]>('/api/v1/checkins/me').then((rows) => rows.map(toCheckin)),
+  /**
+   * Check-in của user hiện tại (mọi habit gộp lại) — cho Dashboard/Insights.
+   * Chỉ lấy cửa sổ 730 ngày gần nhất: đủ cho streak (lookback tối đa 730 ngày) mà không
+   * tải toàn bộ lịch sử — payload có trần cố định thay vì phình theo thời gian dùng.
+   */
+  listAll: () => {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - 730);
+    const q = `from=${toDateKey(from)}&to=${toDateKey(to)}`;
+    return api.get<BackendCheckin[]>(`/api/v1/checkins/me?${q}`).then((rows) => rows.map(toCheckin));
+  },
   create: (data: { habitId: string; date: string; note?: string }): Promise<CheckinResult> =>
     api
       .post<BackendCheckinResult>('/api/v1/checkins', {
