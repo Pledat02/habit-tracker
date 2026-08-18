@@ -10,10 +10,13 @@ import com.hehe.habit_tracker.common.ApiResponse;
 import com.hehe.habit_tracker.common.BaseController;
 import com.hehe.habit_tracker.config.RefreshCookieUtil;
 import com.hehe.habit_tracker.dto.request.AuthenticationRequest;
+import com.hehe.habit_tracker.dto.request.ForgotPasswordRequest;
+import com.hehe.habit_tracker.dto.request.ResetPasswordRequest;
 import com.hehe.habit_tracker.dto.request.UserCreationRequest;
 import com.hehe.habit_tracker.dto.response.AuthenticationResponse;
 import com.hehe.habit_tracker.dto.response.UserCreationResponse;
 import com.hehe.habit_tracker.service.AuthenticationService;
+import com.hehe.habit_tracker.service.PasswordResetService;
 import com.hehe.habit_tracker.service.UserService;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,6 +34,7 @@ public class AuthController extends BaseController<AuthenticationResponse> {
 
     AuthenticationService authenticationService;
     UserService userService;
+    PasswordResetService passwordResetService;
 
     // Kiểu trả về (UserCreationResponse) khác T của base nên dùng ApiResponse trực tiếp,
     // giống cách các endpoint trả List ở những controller khác.
@@ -64,6 +68,23 @@ public class AuthController extends BaseController<AuthenticationResponse> {
             @CookieValue(name = RefreshCookieUtil.COOKIE_NAME, required = false) String refreshToken,
             HttpServletResponse response) {
         authenticationService.logout(refreshToken, response);
+        return ApiResponse.success(null, 200);
+    }
+
+    /**
+     * Xin link đặt lại mật khẩu. LUÔN trả 200 dù email có tồn tại hay không — không tiết lộ
+     * email nào đã đăng ký (chống dò tài khoản).
+     */
+    @PostMapping("/password/forgot")
+    public ApiResponse<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestReset(request.email());
+        return ApiResponse.success(null, 200);
+    }
+
+    /** Đặt lại mật khẩu bằng token nhận qua email. */
+    @PostMapping("/password/reset")
+    public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.confirmReset(request.token(), request.newPassword());
         return ApiResponse.success(null, 200);
     }
 }

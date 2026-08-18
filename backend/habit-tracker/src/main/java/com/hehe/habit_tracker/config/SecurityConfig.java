@@ -33,7 +33,9 @@ public class SecurityConfig {
             // Không đòi Bearer token: access token cũ có thể đã hết hạn, bảo mật
             // của 2 endpoint này nằm ở cookie HttpOnly (refresh token), không phải header.
             "/auth/refresh",
-            "/auth/logout"
+            "/auth/logout",
+            "/auth/password/forgot", // xin link reset (public: user chưa đăng nhập được)
+            "/auth/password/reset" // đặt lại mật khẩu bằng token trong email
     };
     private static final String[] PUBLIC_GET = {
             "/api/v1/achievements/**", // catalog thành tựu: ai xem cũng được

@@ -41,7 +41,8 @@
 - [x] **Error code chuẩn** — thêm field `code` (tên ErrorCode) vào `ApiResponse`; FE `lib/errors.ts` map code→tiếng Việt, `Auth.tsx` switch theo code thay vì dò `.includes('mật khẩu')`. ✅
 - [x] **Code-splitting frontend** — `React.lazy` + `Suspense` mỗi route; recharts (372KB) tách chunk riêng chỉ tải khi vào Insights; main bundle 1.56MB→1.14MB. ✅
 - [x] **Tắt `show-sql` ở prod + actuator** — `show-sql:${JPA_SHOW_SQL:false}`; thêm actuator, `/actuator/health` công khai (probes), metrics đòi token. ✅
-- [ ] Password reset + email verification. *(cần chọn phương án gửi email — xem hỏi bên dưới)*
+- [x] **Password reset qua email** — token SHA-256 hash (1 lần, hạn 30′), endpoint `/auth/password/forgot|reset`, `EmailService` gửi SMTP Gmail hoặc log link nếu chưa cấu hình, FE trang Quên/Đặt lại mật khẩu + link ở Auth. Reset xong thu hồi mọi phiên. Đã test full flow. ✅
+- [ ] Email verification khi đăng ký (dùng lại `EmailService` — feature nhỏ, để sau).
 - [x] Bỏ `"user"` khỏi `@EntityGraph` của `HabitRepository.findByUserId` — giờ chỉ fetch `iconHabit`, khỏi load cả hàng `users` (có `password`). ✅
 
 ## 🚀 Tính năng đề xuất

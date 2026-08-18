@@ -26,6 +26,16 @@ export const usersApi = {
   me: () => api.get<BackendUser>('/users/me').then(toUser),
 };
 
+// ------------------------- Auth (password reset) ------------------------------
+
+export const authApi = {
+  /** Xin link đặt lại mật khẩu. Backend luôn trả 200 (không lộ email có tồn tại hay không). */
+  forgotPassword: (email: string) => api.post<void>('/auth/password/forgot', { email }),
+  /** Đặt lại mật khẩu bằng token nhận trong email. */
+  resetPassword: (token: string, newPassword: string) =>
+    api.post<void>('/auth/password/reset', { token, newPassword }),
+};
+
 // ------------------------- Habits --------------------------------------------
 
 /** HabitResponse bên Spring Boot: icon là 2 field phẳng (icon/iconColor), không phải entity lồng. */

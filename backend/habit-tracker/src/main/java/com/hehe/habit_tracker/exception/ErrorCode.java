@@ -24,6 +24,7 @@ public enum ErrorCode {
     UNAUTHORIZED(403, "You do not have permission", HttpStatus.FORBIDDEN),
     INVALID_REQUEST(400, "Invalid request data", HttpStatus.BAD_REQUEST),
     RATE_LIMITED(429, "Too many requests, please try again later", HttpStatus.TOO_MANY_REQUESTS),
+    RESET_TOKEN_INVALID(400, "Invalid or expired reset token", HttpStatus.BAD_REQUEST),
     ;
 
     private final int code;

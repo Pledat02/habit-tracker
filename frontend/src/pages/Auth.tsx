@@ -118,6 +118,18 @@ export function Auth() {
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
           />
 
+          {mode === 'login' && (
+            <div className="-mt-1 text-right">
+              <button
+                type="button"
+                onClick={() => navigate('/forgot-password')}
+                className="text-sm text-primary hover:underline"
+              >
+                Quên mật khẩu?
+              </button>
+            </div>
+          )}
+
           <Button type="submit" size="lg" className="w-full" loading={submitting}>
             {mode === 'login' ? 'Đăng nhập' : 'Đăng ký'}
           </Button>
