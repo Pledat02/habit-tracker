@@ -1,7 +1,9 @@
 package com.hehe.habit_tracker.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hehe.habit_tracker.common.ApiResponse;
@@ -42,10 +45,20 @@ public class CheckinController extends BaseController<CheckinResponse> {
         return ApiResponse.success(checkinService.createCheckin(request, currentUserId(jwt)), 201);
     }
 
-    /** Tất cả check-in thuộc mọi habit của chính user đang gọi (Dashboard/Insights). */
+    /**
+     * Check-in của mọi habit của chính user đang gọi (Dashboard/Insights).
+     * Truyền cả {@code from} và {@code to} (ISO yyyy-MM-dd) để giới hạn khoảng ngày — chặn payload
+     * phình vô hạn theo thời gian dùng. Thiếu một trong hai thì trả toàn bộ (tương thích ngược).
+     */
     @GetMapping("/me")
-    public ApiResponse<List<CheckinResponse>> getMine(@AuthenticationPrincipal Jwt jwt) {
-        return readListSuccessResponse(checkinService.getAllForUser(currentUserId(jwt)));
+    public ApiResponse<List<CheckinResponse>> getMine(@AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        Long userId = currentUserId(jwt);
+        List<CheckinResponse> result = (from != null && to != null)
+                ? checkinService.getForUserInRange(userId, from, to)
+                : checkinService.getAllForUser(userId);
+        return readListSuccessResponse(result);
     }
 
     /** Danh sách check-in của 1 habit. */

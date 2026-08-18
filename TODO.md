@@ -22,7 +22,7 @@
 
 ## 🔴 P0 — làm trước khi coi là "production-ready"
 
-- [ ] **Rotate mật khẩu DB Supabase** — mật khẩu cũ từng nằm plaintext (file/git/chat) → coi như đã lộ, phải đổi + cập nhật `secrets.properties`.
+- [x] **Rotate mật khẩu DB Supabase** — đã đổi mật khẩu mới + cập nhật `secrets.properties`; verify kết nối OK (HikariPool connected), mật khẩu cũ vô hiệu. ✅
 - [x] **Thay `ddl-auto: update` bằng Flyway** — `ddl-auto: validate` + Flyway baseline (V1 = schema hiện tại, V2 = thêm zone_id). DB cũ được baseline không mất data; DB mới chạy từ đầu. ✅
 - [x] **Lưu timezone của user + tính "hôm nay" theo timezone đó** — thêm cột `zone_id`, `AchievementEngine` tính streak theo `LocalDate.now(userZone)`, frontend gửi timezone lúc đăng ký, fallback `app.default-timezone`. ✅
 
@@ -30,10 +30,10 @@
 
 - [x] **Test Achievement engine** (STREAK + MULTI_STREAK) — `AchievementEngineTest` (Mockito, StreakCalculator thật): cấp đúng ngưỡng, không cấp trùng, multi_streak đủ/thiếu habit. ✅
 - [x] **Test ownership/IDOR** cho Habit/Checkin/UserAchivement service — sai chủ/không tồn tại → 404, không thao tác được dữ liệu người khác, không gắn thành tựu vào habit người khác. ✅
-- [ ] **`/checkins/me` phân trang / lọc theo khoảng ngày** — hiện trả TẤT CẢ check-in, tăng vô hạn theo thời gian dùng.
-- [ ] **Partial unique index cho achievement account-level** (`WHERE habit_id IS NULL`) — chống trùng đang dựa vào check ở service = còn race condition; cần index DB (làm cùng lúc migrate Flyway).
-- [ ] **Logic `weekly_3` / `weekly_5`** — hiện chỉ là nhãn, streak vẫn tính theo ngày; hoặc làm đúng "N lần/tuần", hoặc bỏ preset.
-- [ ] **Cột `currentStreak`/`bestStreak`/`lastCheckinDate` trên Habit** — đang không bao giờ được cập nhật (cột chết); maintain hoặc xoá.
+- [x] **`/checkins/me` lọc theo khoảng ngày** — thêm `?from&to` (ISO); FE gửi cửa sổ 730 ngày gần nhất (đủ cho streak) → payload có trần thay vì phình vô hạn. Dùng unique index (habit_id, checkin_date) sẵn có + thêm index habits(user_id) (V6). ✅
+- [x] **Partial unique index cho achievement account-level** (`WHERE habit_id IS NULL`) — V4 migration; DB tự chặn trùng (đã test insert trùng → unique violation), đóng race condition. ✅
+- [x] **Logic `weekly_3` / `weekly_5`** — backend `StreakCalculator` giờ đếm theo TUẦN (>= N check-in/tuần, tuần ISO theo thứ Hai), khớp frontend; hết lệch FE/BE khi cấp achievement. +3 unit test. ✅
+- [x] **Cột `currentStreak`/`bestStreak`/`lastCheckinDate` trên Habit** — đã XOÁ (V5 migration + bỏ khỏi entity/HabitResponse/FE); streak tính on-the-fly. ✅
 
 ## 🟡 P2 — nice to have
 
@@ -42,7 +42,7 @@
 - [ ] Code-splitting frontend (bundle ~1.5MB).
 - [ ] Tắt `show-sql` ở production + thêm actuator health/metrics.
 - [ ] Password reset + email verification.
-- [ ] Bỏ `"user"` khỏi `@EntityGraph` của `HabitRepository.findByUserId` (đang load cả cột `password` thừa; chỉ cần `iconHabit`).
+- [x] Bỏ `"user"` khỏi `@EntityGraph` của `HabitRepository.findByUserId` — giờ chỉ fetch `iconHabit`, khỏi load cả hàng `users` (có `password`). ✅
 
 ## 🚀 Tính năng đề xuất
 

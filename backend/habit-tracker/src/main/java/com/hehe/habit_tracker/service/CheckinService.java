@@ -68,6 +68,17 @@ public class CheckinService {
                 .toList();
     }
 
+    /**
+     * Check-in của user trong khoảng [from, to]. Dùng khi client giới hạn cửa sổ (vd 730 ngày
+     * gần nhất — đủ cho streak) để payload không phình vô hạn theo thời gian dùng app.
+     */
+    public List<CheckinResponse> getForUserInRange(Long userId, LocalDate from, LocalDate to) {
+        return checkinRepository.findByHabitUserIdAndCheckinDateBetween(userId, from, to)
+                .stream()
+                .map(checkinMapper::toCheckinResponse)
+                .toList();
+    }
+
     public List<CheckinResponse> getCheckinsByHabit(Long habitId, Long userId) {
         ownedHabit(habitId, userId); // ném lỗi nếu habit không tồn tại hoặc không phải của user này
         return checkinRepository.findByHabitId(habitId)

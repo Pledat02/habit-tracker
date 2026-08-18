@@ -1,8 +1,10 @@
 package com.hehe.habit_tracker.service;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,14 +18,17 @@ import com.hehe.habit_tracker.entity.Habit;
  * frontend (utils.ts). Đếm ngược từ hôm nay: mỗi NGÀY-CÓ-LỊCH đã check-in thì +1,
  * gặp ngày-có-lịch bỏ lỡ (không phải hôm nay) thì dừng. Ngày không có lịch bỏ qua.
  *
- * frequency lưu dạng JSON: "daily"/"weekly_3"/"weekly_5" (coi như có lịch mọi ngày,
- * khớp hành vi frontend hiện tại) hoặc {"type":"days","days":[0..6]} (0=CN..6=T7).
+ * frequency lưu dạng JSON: "daily" / "weekly_3" / "weekly_5" / {"type":"days","days":[0..6]}
+ * (0=CN..6=T7). Hai chế độ tính streak (khớp frontend utils.ts):
+ *  - "N lần/tuần" (weekly_3/weekly_5): đếm số TUẦN liên tiếp đạt đủ N check-in.
+ *  - còn lại (daily / days cụ thể): đếm số NGÀY-có-lịch liên tiếp có check-in.
  * Parse thủ công (không dùng Jackson) vì tập giá trị nhỏ và cố định.
  */
 @Component
 public class StreakCalculator {
 
     private static final int MAX_LOOKBACK_DAYS = 730;
+    private static final int MAX_LOOKBACK_WEEKS = 104; // ~2 năm, cận an toàn cho weekly
     // Bắt mảng số trong "days":[...] của frequency dạng {"type":"days","days":[1,3,5]}.
     private static final Pattern DAYS_ARRAY = Pattern.compile("\"days\"\\s*:\\s*\\[([0-9,\\s]*)]");
 
@@ -36,6 +41,11 @@ public class StreakCalculator {
      * Production luôn gọi bản 2 tham số ở trên (LocalDate.now()).
      */
     int currentStreak(Habit habit, List<LocalDate> checkinDates, LocalDate today) {
+        Integer weeklyTarget = parseWeeklyTarget(habit.getFrequency());
+        if (weeklyTarget != null) {
+            return currentWeeklyStreak(checkinDates, weeklyTarget, today);
+        }
+
         Set<LocalDate> done = new HashSet<>(checkinDates);
         Set<Integer> scheduledDays = parseScheduledDays(habit.getFrequency());
         LocalDate cursor = today;
@@ -52,6 +62,51 @@ public class StreakCalculator {
             cursor = cursor.minusDays(1);
         }
         return streak;
+    }
+
+    /**
+     * Streak cho habit "N lần/tuần": số TUẦN liên tiếp đạt đủ >= N check-in, đếm ngược
+     * từ tuần hiện tại. Tuần theo thứ Hai (ISO, khớp weekKey ở frontend). Tuần hiện tại
+     * chưa đủ N nhưng CHƯA hết tuần thì không tính đứt (mirror "hôm nay chưa làm không đứt").
+     */
+    private int currentWeeklyStreak(List<LocalDate> checkinDates, int target, LocalDate today) {
+        Map<LocalDate, Integer> perWeek = new HashMap<>();
+        for (LocalDate d : checkinDates) {
+            perWeek.merge(mondayOf(d), 1, Integer::sum);
+        }
+        LocalDate thisMonday = mondayOf(today);
+        LocalDate cursor = thisMonday;
+        int streak = 0;
+
+        for (int i = 0; i < MAX_LOOKBACK_WEEKS; i++) {
+            int count = perWeek.getOrDefault(cursor, 0);
+            if (count >= target) {
+                streak++;
+            } else if (!cursor.equals(thisMonday)) {
+                break; // tuần trong quá khứ không đủ số lần -> đứt streak
+            }
+            cursor = cursor.minusWeeks(1);
+        }
+        return streak;
+    }
+
+    /** Thứ Hai của tuần chứa `date` (ISO): Mon(1)..Sun(7) -> lùi về Mon. */
+    private LocalDate mondayOf(LocalDate date) {
+        return date.minusDays(date.getDayOfWeek().getValue() - 1L);
+    }
+
+    /** Target của habit "N lần/tuần": 3 cho weekly_3, 5 cho weekly_5; null nếu không phải. */
+    private Integer parseWeeklyTarget(String frequency) {
+        if (frequency == null) {
+            return null;
+        }
+        if (frequency.contains("weekly_3")) {
+            return 3;
+        }
+        if (frequency.contains("weekly_5")) {
+            return 5;
+        }
+        return null;
     }
 
     /** Habit có lên lịch vào ngày này không (theo frequency). Dùng bởi ReminderScheduler. */
