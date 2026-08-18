@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, ChevronRight, LogOut, Mail, Moon, Sun, Trophy, User as UserIcon, Lock, Smartphone } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { cn, initials } from '@/lib/utils';
+import { disablePush, enablePush, isPushEnabled, isPushSupported } from '@/lib/push';
 
 export function Profile() {
   const { user, logout, updateUser } = useAuth();
@@ -18,9 +19,37 @@ export function Profile() {
   const [saving, setSaving] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
 
-  // Reminder preferences (local-only demo state)
+  // Reminder preferences
   const [emailReminder, setEmailReminder] = useState(true);
   const [pushReminder, setPushReminder] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const pushSupported = isPushSupported();
+
+  // Đồng bộ trạng thái toggle push với subscription thật của trình duyệt lúc mở trang.
+  useEffect(() => {
+    isPushEnabled().then(setPushReminder).catch(() => setPushReminder(false));
+  }, []);
+
+  const togglePush = async (next: boolean) => {
+    setPushBusy(true);
+    try {
+      if (next) {
+        const ok = await enablePush();
+        setPushReminder(ok);
+        toast[ok ? 'success' : 'error'](
+          ok ? 'Đã bật thông báo đẩy' : 'Không bật được (trình duyệt từ chối hoặc không hỗ trợ)',
+        );
+      } else {
+        await disablePush();
+        setPushReminder(false);
+        toast.success('Đã tắt thông báo đẩy');
+      }
+    } catch {
+      toast.error('Có lỗi khi cập nhật thông báo đẩy');
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   const saveProfile = async () => {
     if (!name.trim()) return;
@@ -117,9 +146,10 @@ export function Profile() {
           <SettingToggle
             icon={<Smartphone className="h-5 w-5 text-primary" />}
             label="Thông báo đẩy (push)"
-            desc="Nhận thông báo trên thiết bị"
+            desc={pushSupported ? 'Nhận thông báo trên thiết bị' : 'Trình duyệt không hỗ trợ'}
             checked={pushReminder}
-            onChange={setPushReminder}
+            onChange={togglePush}
+            disabled={!pushSupported || pushBusy}
           />
         </div>
       </section>
@@ -153,15 +183,17 @@ function SettingToggle({
   desc,
   checked,
   onChange,
+  disabled = false,
 }: {
   icon: React.ReactNode;
   label: string;
   desc: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl p-2">
+    <label className={cn('flex items-center justify-between gap-3 rounded-xl p-2', disabled ? 'opacity-60' : 'cursor-pointer')}>
       <span className="flex items-center gap-3">
         {icon}
         <span>
@@ -174,8 +206,9 @@ function SettingToggle({
         role="switch"
         aria-checked={checked}
         aria-label={label}
+        disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={cn('focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors', checked ? 'bg-primary' : 'bg-surface-2 ring-1 ring-border')}
+        className={cn('focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed', checked ? 'bg-primary' : 'bg-surface-2 ring-1 ring-border')}
       >
         <span className={cn('inline-block h-5 w-5 rounded-full bg-white shadow transition-transform', checked ? 'translate-x-5' : 'translate-x-0.5')} />
       </button>

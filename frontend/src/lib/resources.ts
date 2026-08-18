@@ -181,6 +181,16 @@ function toAchievement(a: BackendUserAchievement): Achievement {
   };
 }
 
+// ------------------------- Web Push --------------------------------------------
+
+export const pushApi = {
+  getPublicKey: () => api.get<string>('/api/v1/push/public-key'),
+  subscribe: (data: { endpoint: string; p256dh: string; auth: string }) =>
+    api.post<void>('/api/v1/push/subscribe', data),
+  unsubscribe: (endpoint: string) =>
+    api.delete<void>(`/api/v1/push/subscribe?endpoint=${encodeURIComponent(endpoint)}`),
+};
+
 export const achievementsApi = {
   /** Catalog định nghĩa (STREAK_7, STREAK_30...) — dùng để tra definitionId khi mở khoá thành tựu mới. */
   listDefinitions: () =>

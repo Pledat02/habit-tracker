@@ -45,7 +45,7 @@
 
 ## 🚀 Tính năng đề xuất
 
-- [ ] **Nhắc nhở** (khuyến nghị Web Push trước, email sau) — cần: timezone user (P0), scheduled job, idempotency (không gửi trùng), bảng preferences + unsubscribe, bỏ qua habit paused/đã check-in.
+- [x] **Nhắc nhở — Web Push** ✅ — VAPID + `WebPushService` + `ReminderScheduler` (mỗi phút, theo timezone user, bỏ qua habit paused/đã check-in) + service worker + toggle ở Profile. (Email nhắc nhở: để sau nếu cần.)
 - [ ] **Đồng bộ Google Calendar** — xin thêm scope `calendar.events` (incremental auth) + offline access; tạo recurring event `RRULE` map từ `frequency`; lưu Google refresh token vào `oauth_accounts`.
 - [ ] **Hoàn thiện Streak Freeze** — UI đã có toggle, chưa có logic "đóng băng" streak khi lỡ 1 ngày.
 - [ ] **Social / leaderboard** — mở rộng từ share card đã có.
