@@ -54,6 +54,11 @@ public class StreakCalculator {
         return streak;
     }
 
+    /** Habit có lên lịch vào ngày này không (theo frequency). Dùng bởi ReminderScheduler. */
+    public boolean isScheduledOn(String frequency, LocalDate date) {
+        return isScheduledOn(parseScheduledDays(frequency), date);
+    }
+
     /** null => có lịch mọi ngày (daily/weekly_*); ngược lại là tập thứ trong tuần (0=CN..6=T7). */
     private Set<Integer> parseScheduledDays(String frequency) {
         if (frequency == null || frequency.isBlank() || !frequency.contains("days")) {

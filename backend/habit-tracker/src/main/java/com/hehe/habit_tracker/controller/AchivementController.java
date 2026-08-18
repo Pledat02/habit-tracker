@@ -39,7 +39,7 @@ public class AchivementController extends BaseController<AchivementResponse> {
 
     @GetMapping
     public ApiResponse<List<AchivementResponse>> getAll() {
-        return ApiResponse.success(achivementService.getAllAchivements(), 200);
+        return readListSuccessResponse(achivementService.getAllAchivements());
     }
 
     @GetMapping("/{id}")

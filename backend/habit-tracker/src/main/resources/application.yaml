@@ -51,6 +51,11 @@ jwt:
 app:
     # Timezone mặc định khi user chưa đặt (streak tính "hôm nay" theo giờ này).
     default-timezone: ${DEFAULT_TIMEZONE:Asia/Ho_Chi_Minh}
+    # Web Push: private key BẮT BUỘC bí mật (secrets.properties/env). Rỗng -> tính năng push tắt.
+    push:
+        vapid-public-key: ${VAPID_PUBLIC_KEY:}
+        vapid-private-key: ${VAPID_PRIVATE_KEY:}
+        vapid-subject: ${VAPID_SUBJECT:mailto:admin@habit-tracker.local}
     # Nơi frontend nhận lại token sau khi đăng nhập Google xong (backend redirect tới đây kèm ?token=...).
     frontend-oauth2-redirect-uri: ${FRONTEND_OAUTH2_REDIRECT_URI:http://localhost:5173/oauth2/callback}
     # Secure=true đòi HTTPS (localhost qua http vẫn được các trình duyệt hiện đại chấp nhận).
