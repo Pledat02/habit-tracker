@@ -70,4 +70,42 @@ class StreakCalculatorTest {
 
         assertEquals(2, calc.currentStreak(habit, List.of(wed, mon), TODAY));
     }
+
+    // --- weekly_N: đếm theo TUẦN (>= N check-in/tuần), tuần theo thứ Hai (ISO) ---
+    // TODAY = Thứ Tư 2024-01-03. Tuần này: Mon 2024-01-01 .. Sun 2024-01-07.
+    // Tuần trước: Mon 2023-12-25 .. Sun 2023-12-31.
+
+    @Test
+    void weeklyHabit_twoWeeksMeetTarget_countsTwo() {
+        Habit habit = habitWithFrequency("\"weekly_3\"");
+        List<LocalDate> checkins = List.of(
+                LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 2), LocalDate.of(2024, 1, 3),   // tuần này: 3
+                LocalDate.of(2023, 12, 25), LocalDate.of(2023, 12, 26), LocalDate.of(2023, 12, 27)); // tuần trước: 3
+
+        assertEquals(2, calc.currentStreak(habit, checkins, TODAY));
+    }
+
+    @Test
+    void weeklyHabit_currentWeekNotYetEnough_doesNotBreak() {
+        Habit habit = habitWithFrequency("\"weekly_3\"");
+        // Tuần này mới 2 lần (< 3) nhưng CHƯA hết tuần -> không đứt; tuần trước đủ 3 -> streak = 1.
+        List<LocalDate> checkins = List.of(
+                LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 2),                              // tuần này: 2
+                LocalDate.of(2023, 12, 25), LocalDate.of(2023, 12, 26), LocalDate.of(2023, 12, 27)); // tuần trước: 3
+
+        assertEquals(1, calc.currentStreak(habit, checkins, TODAY));
+    }
+
+    @Test
+    void weeklyHabit_pastWeekBelowTarget_breaksStreak() {
+        Habit habit = habitWithFrequency("\"weekly_5\"");
+        // Tuần này đủ 5, tuần trước chỉ 4 (< 5) -> chỉ tính tuần này.
+        List<LocalDate> checkins = List.of(
+                LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 2), LocalDate.of(2024, 1, 3),
+                LocalDate.of(2024, 1, 4), LocalDate.of(2024, 1, 5),                              // tuần này: 5
+                LocalDate.of(2023, 12, 25), LocalDate.of(2023, 12, 26),
+                LocalDate.of(2023, 12, 27), LocalDate.of(2023, 12, 28));                         // tuần trước: 4
+
+        assertEquals(1, calc.currentStreak(habit, checkins, TODAY));
+    }
 }
