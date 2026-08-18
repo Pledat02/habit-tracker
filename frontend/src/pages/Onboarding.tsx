@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { useCreateHabit } from '@/hooks/useHabits';
 import { cn, encodeFrequency } from '@/lib/utils';
+import { ONBOARDING_KEY } from '@/lib/onboarding';
 
-export const ONBOARDING_KEY = 'ht-onboarded';
+export { ONBOARDING_KEY };
 
 interface Slide {
   icon: React.ReactNode;

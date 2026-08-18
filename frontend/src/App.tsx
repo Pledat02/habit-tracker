@@ -1,16 +1,21 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { AppShell } from '@/components/layout/AppShell';
-import { Auth } from '@/pages/Auth';
-import { OAuth2Callback } from '@/pages/OAuth2Callback';
-import { Onboarding, ONBOARDING_KEY } from '@/pages/Onboarding';
-import { Dashboard } from '@/pages/Dashboard';
-import { HabitsList } from '@/pages/HabitsList';
-import { HabitDetail } from '@/pages/HabitDetail';
-import { Insights } from '@/pages/Insights';
-import { AchievementsPage } from '@/pages/AchievementsPage';
-import { Profile } from '@/pages/Profile';
+
+// Mỗi page tách thành chunk riêng (React.lazy) -> tải theo route thay vì gộp hết vào 1 bundle.
+// ONBOARDING_KEY ở module nhẹ riêng (lib/onboarding) nên import tĩnh không kéo page Onboarding vào bundle đầu.
+import { ONBOARDING_KEY } from '@/lib/onboarding';
+const Auth = lazy(() => import('@/pages/Auth').then((m) => ({ default: m.Auth })));
+const OAuth2Callback = lazy(() => import('@/pages/OAuth2Callback').then((m) => ({ default: m.OAuth2Callback })));
+const Onboarding = lazy(() => import('@/pages/Onboarding').then((m) => ({ default: m.Onboarding })));
+const Dashboard = lazy(() => import('@/pages/Dashboard').then((m) => ({ default: m.Dashboard })));
+const HabitsList = lazy(() => import('@/pages/HabitsList').then((m) => ({ default: m.HabitsList })));
+const HabitDetail = lazy(() => import('@/pages/HabitDetail').then((m) => ({ default: m.HabitDetail })));
+const Insights = lazy(() => import('@/pages/Insights').then((m) => ({ default: m.Insights })));
+const AchievementsPage = lazy(() => import('@/pages/AchievementsPage').then((m) => ({ default: m.AchievementsPage })));
+const Profile = lazy(() => import('@/pages/Profile').then((m) => ({ default: m.Profile })));
 
 function FullScreenLoader() {
   return (
@@ -34,6 +39,7 @@ export default function App() {
   const { user, loading } = useAuth();
 
   return (
+    <Suspense fallback={<FullScreenLoader />}>
     <Routes>
       <Route path="/auth" element={user && !loading ? <Navigate to="/" replace /> : <Auth />} />
       <Route path="/oauth2/callback" element={<OAuth2Callback />} />
@@ -105,5 +111,6 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   );
 }
