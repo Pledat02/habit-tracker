@@ -101,8 +101,8 @@ async function httpRequest<T>(
   // (xem common/ApiResponse.java) — kể cả lúc lỗi. Bóc .message để báo lỗi sạch
   // thay vì ném nguyên chuỗi JSON thô ra UI.
   if (!res.ok) {
-    const errBody = (await res.json().catch(() => null)) as { message?: string } | null;
-    throw new ApiError(res.status, errBody?.message || res.statusText);
+    const errBody = (await res.json().catch(() => null)) as { message?: string; code?: string } | null;
+    throw new ApiError(res.status, errBody?.message || res.statusText, errBody?.code);
   }
   if (res.status === 204) return undefined as T;
   const envelope = (await res.json()) as { data: T };
@@ -115,7 +115,8 @@ export function googleLoginUrl(): string {
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  /** `code` = mã máy-đọc từ backend (tên ErrorCode, vd 'USER_EXISTED'); undefined nếu lỗi mạng/HTTP thô. */
+  constructor(public status: number, message: string, public code?: string) {
     super(message);
     this.name = 'ApiError';
   }

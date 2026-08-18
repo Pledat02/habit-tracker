@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, Lock, Mail, User as UserIcon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { localizeError } from '@/lib/errors';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
@@ -47,11 +48,12 @@ export function Auth() {
       else await register(name, email, password);
       navigate('/');
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Có lỗi xảy ra';
-      // Attach to the most relevant field when possible.
-      if (msg.toLowerCase().includes('mật khẩu')) setErrors({ password: msg });
-      else if (msg.toLowerCase().includes('email')) setErrors({ email: msg });
-      else toast.error(msg);
+      // Switch theo MÃ lỗi ổn định (không dò chuỗi message tiếng Việt/Anh nữa).
+      const { message, field } = localizeError(err);
+      if (field === 'password') setErrors({ password: message });
+      else if (field === 'email') setErrors({ email: message });
+      else if (field === 'name') setErrors({ name: message });
+      else toast.error(message);
     } finally {
       setSubmitting(false);
     }

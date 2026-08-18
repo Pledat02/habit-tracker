@@ -36,9 +36,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
         response.setStatus(ec.getStatusCode().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
-        // Viết tay JSON khớp record ApiResponse(data, message, status) — jackson-databind không
-        // có trên compile classpath (chỉ runtime), nên không import ObjectMapper ở đây.
-        String body = "{\"data\":null,\"message\":\"" + escape(ec.getMessage()) + "\",\"status\":" + ec.getCode() + "}";
+        // Viết tay JSON khớp record ApiResponse(data, message, code, status) — jackson-databind
+        // không có trên compile classpath (chỉ runtime), nên không import ObjectMapper ở đây.
+        String body = "{\"data\":null,\"message\":\"" + escape(ec.getMessage())
+                + "\",\"code\":\"" + ec.name() + "\",\"status\":" + ec.getCode() + "}";
         response.getWriter().write(body);
     }
 

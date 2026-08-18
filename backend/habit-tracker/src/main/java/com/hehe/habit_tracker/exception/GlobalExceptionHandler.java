@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handlingAppException(AppException exception) {
         ErrorCode errorCode = exception.getErrorCode();
         return ResponseEntity.status(errorCode.getStatusCode())
-                .body(ApiResponse.error(errorCode.getCode(), errorCode.getMessage()));
+                .body(ApiResponse.error(errorCode.getCode(), errorCode.getMessage(), errorCode.name()));
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
@@ -27,7 +27,8 @@ public class GlobalExceptionHandler {
                 ? exception.getFieldError().getDefaultMessage()
                 : "Validation failed";
         return ResponseEntity.status(ErrorCode.INVALID_REQUEST.getStatusCode())
-                .body(ApiResponse.error(ErrorCode.INVALID_REQUEST.getCode(), defaultMessage));
+                .body(ApiResponse.error(ErrorCode.INVALID_REQUEST.getCode(), defaultMessage,
+                        ErrorCode.INVALID_REQUEST.name()));
     }
 
     @ExceptionHandler(value = Exception.class)
@@ -36,6 +37,7 @@ public class GlobalExceptionHandler {
                 ? exception.getMessage()
                 : ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage();
         return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode())
-                .body(ApiResponse.error(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode(), message));
+                .body(ApiResponse.error(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode(), message,
+                        ErrorCode.UNCATEGORIZED_EXCEPTION.name()));
     }
 }
