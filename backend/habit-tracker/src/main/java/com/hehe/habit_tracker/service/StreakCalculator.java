@@ -28,9 +28,16 @@ public class StreakCalculator {
     private static final Pattern DAYS_ARRAY = Pattern.compile("\"days\"\\s*:\\s*\\[([0-9,\\s]*)]");
 
     public int currentStreak(Habit habit, List<LocalDate> checkinDates) {
+        return currentStreak(habit, checkinDates, LocalDate.now());
+    }
+
+    /**
+     * Overload nhận `today` tường minh — để test XÁC ĐỊNH, không phụ thuộc ngày chạy.
+     * Production luôn gọi bản 2 tham số ở trên (LocalDate.now()).
+     */
+    int currentStreak(Habit habit, List<LocalDate> checkinDates, LocalDate today) {
         Set<LocalDate> done = new HashSet<>(checkinDates);
         Set<Integer> scheduledDays = parseScheduledDays(habit.getFrequency());
-        LocalDate today = LocalDate.now();
         LocalDate cursor = today;
         int streak = 0;
 
