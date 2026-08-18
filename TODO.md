@@ -37,11 +37,11 @@
 
 ## 🟡 P2 — nice to have
 
-- [ ] Rate limiting cho `/auth/login`, `/auth/refresh` (chống brute-force).
-- [ ] Error code chuẩn để FE khỏi dò keyword tiếng Việt (message backend đang tiếng Anh).
-- [ ] Code-splitting frontend (bundle ~1.5MB).
-- [ ] Tắt `show-sql` ở production + thêm actuator health/metrics.
-- [ ] Password reset + email verification.
+- [x] **Rate limiting** `/auth/login|refresh|register` — token bucket in-memory theo IP (tự code, 5 lần/hồi 5 phút), vượt → 429. Đã test thực tế. ✅
+- [x] **Error code chuẩn** — thêm field `code` (tên ErrorCode) vào `ApiResponse`; FE `lib/errors.ts` map code→tiếng Việt, `Auth.tsx` switch theo code thay vì dò `.includes('mật khẩu')`. ✅
+- [x] **Code-splitting frontend** — `React.lazy` + `Suspense` mỗi route; recharts (372KB) tách chunk riêng chỉ tải khi vào Insights; main bundle 1.56MB→1.14MB. ✅
+- [x] **Tắt `show-sql` ở prod + actuator** — `show-sql:${JPA_SHOW_SQL:false}`; thêm actuator, `/actuator/health` công khai (probes), metrics đòi token. ✅
+- [ ] Password reset + email verification. *(cần chọn phương án gửi email — xem hỏi bên dưới)*
 - [x] Bỏ `"user"` khỏi `@EntityGraph` của `HabitRepository.findByUserId` — giờ chỉ fetch `iconHabit`, khỏi load cả hàng `users` (có `password`). ✅
 
 ## 🚀 Tính năng đề xuất
