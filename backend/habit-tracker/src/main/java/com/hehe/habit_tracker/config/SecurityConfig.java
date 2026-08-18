@@ -39,7 +39,10 @@ public class SecurityConfig {
             "/api/v1/achievements/**", // catalog thành tựu: ai xem cũng được
             "/oauth2/jwks", // public key để verify token
             "/oauth2/authorization/**", // bước 1: bắt đầu redirect sang Google
-            "/login/oauth2/code/**" // bước 2: Google redirect callback về đây
+            "/login/oauth2/code/**", // bước 2: Google redirect callback về đây
+            "/actuator/health", // health cho load balancer/uptime: công khai, không lộ chi tiết
+            "/actuator/health/**"
+            // metrics/khác dưới /actuator vẫn đòi token (rơi vào anyRequest().authenticated()).
     };
 
     @Bean

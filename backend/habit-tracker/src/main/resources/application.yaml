@@ -18,7 +18,9 @@ spring:
             # Flyway sở hữu schema giờ. validate: Hibernate CHỈ kiểm entity khớp DB,
             # KHÔNG tự đổi (an toàn hơn update rất nhiều).
             ddl-auto: validate
-        show-sql: true
+        # TẮT mặc định: log SQL gây ồn + lộ dữ liệu ở production. Bật khi debug bằng
+        # JPA_SHOW_SQL=true (local). format-sql chỉ có tác dụng khi show-sql bật.
+        show-sql: ${JPA_SHOW_SQL:false}
         properties:
             hibernate:
                 dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -47,6 +49,19 @@ jwt:
     validDuration: ${JWT_VALID_DURATION:3600}
     # Thời hạn refresh token (giây) — mặc định 30 ngày. Refresh token lưu ở DB (hash), không phải JWT.
     refreshValidDuration: ${JWT_REFRESH_VALID_DURATION:2592000}
+
+# Actuator: chỉ expose health/info/metrics. health công khai (SecurityConfig), phần còn
+# lại đòi token. show-details when-authorized -> không lộ chi tiết DB cho request nặc danh.
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health,info,metrics
+    endpoint:
+        health:
+            show-details: when-authorized
+            probes:
+                enabled: true
 
 app:
     # Timezone mặc định khi user chưa đặt (streak tính "hôm nay" theo giờ này).
