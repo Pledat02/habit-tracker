@@ -35,7 +35,6 @@ interface BackendHabit {
   note: string | null;
   remindTime: string | null; // 'HH:mm:ss' hoặc null
   isPaused: boolean;
-  bestStreak: number;
   icon: string | null;
   iconColor: string | null;
   createdAt: string;

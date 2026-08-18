@@ -1,7 +1,6 @@
 package com.hehe.habit_tracker.entity;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -46,11 +45,8 @@ public class Habit {
     private LocalTime remindTime;
     @Builder.Default
     private boolean isPaused = false;
-    @Builder.Default
-    private int bestStreak = 0;
-    @Builder.Default
-    private int currentStreak = 0;
-    private LocalDate lastCheckinDate;
+    // Streak KHÔNG lưu cột: tính on-the-fly bằng StreakCalculator (cột cũ best_streak/
+    // current_streak/last_checkin_date đã bỏ ở migration V5, chúng chưa bao giờ được cập nhật).
     @OneToOne
     @JoinColumn(name = "icon_id")
     private IconHabit iconHabit;

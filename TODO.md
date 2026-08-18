@@ -33,7 +33,7 @@
 - [ ] **`/checkins/me` phân trang / lọc theo khoảng ngày** — hiện trả TẤT CẢ check-in, tăng vô hạn theo thời gian dùng.
 - [x] **Partial unique index cho achievement account-level** (`WHERE habit_id IS NULL`) — V4 migration; DB tự chặn trùng (đã test insert trùng → unique violation), đóng race condition. ✅
 - [ ] **Logic `weekly_3` / `weekly_5`** — hiện chỉ là nhãn, streak vẫn tính theo ngày; hoặc làm đúng "N lần/tuần", hoặc bỏ preset.
-- [ ] **Cột `currentStreak`/`bestStreak`/`lastCheckinDate` trên Habit** — đang không bao giờ được cập nhật (cột chết); maintain hoặc xoá.
+- [x] **Cột `currentStreak`/`bestStreak`/`lastCheckinDate` trên Habit** — đã XOÁ (V5 migration + bỏ khỏi entity/HabitResponse/FE); streak tính on-the-fly. ✅
 
 ## 🟡 P2 — nice to have
 

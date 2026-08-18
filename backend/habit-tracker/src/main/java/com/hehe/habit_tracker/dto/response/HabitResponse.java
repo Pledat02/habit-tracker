@@ -13,7 +13,6 @@ public record HabitResponse(
         String note,
         LocalTime remindTime,
         boolean isPaused,
-        int bestStreak,
         String icon,
         String iconColor,
         Instant createdAt,
