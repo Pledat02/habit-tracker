@@ -28,7 +28,8 @@
 
 ## 🟠 P1 — nợ kỹ thuật thật
 
-- [ ] **Test cho Achievement engine** (STREAK + MULTI_STREAK) và **ownership/IDOR** — logic nghiệp vụ quan trọng nhất hiện chưa có test.
+- [x] **Test Achievement engine** (STREAK + MULTI_STREAK) — `AchievementEngineTest` (Mockito, StreakCalculator thật): cấp đúng ngưỡng, không cấp trùng, multi_streak đủ/thiếu habit. ✅
+- [ ] **Test ownership/IDOR** cho Habit/Checkin/UserAchivement service (sai chủ → 404).
 - [ ] **`/checkins/me` phân trang / lọc theo khoảng ngày** — hiện trả TẤT CẢ check-in, tăng vô hạn theo thời gian dùng.
 - [ ] **Partial unique index cho achievement account-level** (`WHERE habit_id IS NULL`) — chống trùng đang dựa vào check ở service = còn race condition; cần index DB (làm cùng lúc migrate Flyway).
 - [ ] **Logic `weekly_3` / `weekly_5`** — hiện chỉ là nhãn, streak vẫn tính theo ngày; hoặc làm đúng "N lần/tuần", hoặc bỏ preset.
