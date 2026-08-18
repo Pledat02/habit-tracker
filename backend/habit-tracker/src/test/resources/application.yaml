@@ -5,7 +5,9 @@
 spring:
     jpa:
         hibernate:
-            ddl-auto: create-drop
+            # Flyway tạo schema trên container Postgres (chạy V1 + V2), Hibernate chỉ validate.
+            # -> test luôn kiểm tra migration đúng.
+            ddl-auto: validate
         show-sql: false
 
     security:

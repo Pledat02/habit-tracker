@@ -11,6 +11,8 @@ public record UserCreationRequest(
         @NotBlank(message = "Email is required") @Email(message = "Email should be valid") String email,
 
         @NotBlank(message = "Password is required") @Size(min = 6, max = 20, message = "Password must be between 6 and 20 characters") String password,
-        String role) {
+        String role,
+        /** IANA timezone của trình duyệt (frontend gửi). Null -> dùng default-timezone. */
+        String timezone) {
 
 }

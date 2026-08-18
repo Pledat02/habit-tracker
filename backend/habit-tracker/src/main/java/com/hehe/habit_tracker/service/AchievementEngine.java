@@ -1,12 +1,14 @@
 package com.hehe.habit_tracker.service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,7 @@ import com.hehe.habit_tracker.repository.UserAchivementRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 
 /**
  * Tự động đánh giá & cấp thành tựu — thay cho việc cấp thủ công từ frontend.
@@ -50,8 +53,16 @@ public class AchievementEngine {
     UserAchivementMapper userAchivementMapper;
     StreakCalculator streakCalculator;
 
+    /** Timezone mặc định khi user chưa đặt (zone_id null). */
+    @Value("${app.default-timezone:UTC}")
+    @NonFinal
+    String defaultTimezone;
+
     @Transactional
     public List<UserAchivementResponse> evaluate(Users user, Habit triggeredHabit) {
+        // "Hôm nay" theo giờ CỦA USER, không phải giờ server -> streak đúng với người khác múi giờ.
+        LocalDate today = LocalDate.now(resolveZone(user));
+
         // Tính streak hiện tại cho MỌI habit của user 1 lần (check-in vừa lưu đã nằm trong đây).
         List<Checkin> allCheckins = checkinRepository.findByHabitUserId(user.getId());
         Map<Long, List<LocalDate>> datesByHabit = allCheckins.stream()
@@ -63,7 +74,7 @@ public class AchievementEngine {
         Map<Long, Integer> streakByHabit = new HashMap<>();
         for (Habit h : habits) {
             streakByHabit.put(h.getId(),
-                    streakCalculator.currentStreak(h, datesByHabit.getOrDefault(h.getId(), List.of())));
+                    streakCalculator.currentStreak(h, datesByHabit.getOrDefault(h.getId(), List.of()), today));
         }
 
         List<UserAchivement> newlyUnlocked = new ArrayList<>();
@@ -94,6 +105,16 @@ public class AchievementEngine {
         }
 
         return newlyUnlocked.stream().map(userAchivementMapper::toUserAchivementResponse).toList();
+    }
+
+    /** Zone của user, fallback default nếu null hoặc chuỗi không hợp lệ. */
+    private ZoneId resolveZone(Users user) {
+        String zid = user.getZoneId() != null ? user.getZoneId() : defaultTimezone;
+        try {
+            return ZoneId.of(zid);
+        } catch (Exception e) {
+            return ZoneId.of(defaultTimezone);
+        }
     }
 
     private UserAchivement grant(Users user, Achivement definition, Habit habit) {

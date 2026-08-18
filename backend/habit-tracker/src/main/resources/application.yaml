@@ -15,11 +15,20 @@ spring:
 
     jpa:
         hibernate:
-            ddl-auto: update
+            # Flyway sở hữu schema giờ. validate: Hibernate CHỈ kiểm entity khớp DB,
+            # KHÔNG tự đổi (an toàn hơn update rất nhiều).
+            ddl-auto: validate
         show-sql: true
         properties:
             hibernate:
                 dialect: org.hibernate.dialect.PostgreSQLDialect
+
+    flyway:
+        # DB Supabase hiện tại đã có sẵn schema (do ddl-auto:update cũ tạo) nhưng chưa có
+        # bảng lịch sử flyway -> baseline-on-migrate đánh dấu nó ở V1 (bỏ qua V1), rồi chạy V2+.
+        # DB MỚI (rỗng) sẽ chạy toàn bộ từ V1.
+        baseline-on-migrate: true
+        baseline-version: 1
 
     security:
         oauth2:
@@ -40,6 +49,8 @@ jwt:
     refreshValidDuration: ${JWT_REFRESH_VALID_DURATION:2592000}
 
 app:
+    # Timezone mặc định khi user chưa đặt (streak tính "hôm nay" theo giờ này).
+    default-timezone: ${DEFAULT_TIMEZONE:Asia/Ho_Chi_Minh}
     # Nơi frontend nhận lại token sau khi đăng nhập Google xong (backend redirect tới đây kèm ?token=...).
     frontend-oauth2-redirect-uri: ${FRONTEND_OAUTH2_REDIRECT_URI:http://localhost:5173/oauth2/callback}
     # Secure=true đòi HTTPS (localhost qua http vẫn được các trình duyệt hiện đại chấp nhận).

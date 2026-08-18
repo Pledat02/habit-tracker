@@ -45,8 +45,12 @@ public class UserService {
         // Dựng lại request với username đã chốt (KHÔNG thể gọi mapper trực tiếp với
         // username null: Users.username là @NonNull, mapper sẽ ném NPE ngay khi tạo).
         Users user = userMapper.toUsers(
-                new UserCreationRequest(username, request.email(), request.password(), request.role()));
+                new UserCreationRequest(username, request.email(), request.password(), request.role(),
+                        request.timezone()));
         user.setPassword(passwordEncoder.encode(request.password()));
+        if (request.timezone() != null && !request.timezone().isBlank()) {
+            user.setZoneId(request.timezone());
+        }
         if (request.role() != null && !request.role().isBlank()) {
             try {
                 user.setRole(Role.valueOf(request.role().toUpperCase()));

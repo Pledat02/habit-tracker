@@ -25,6 +25,11 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// Flyway: migration schema có version (thay ddl-auto:update).
+	// Spring Boot 4 modular -> cần spring-boot-flyway để có AUTO-CONFIGURATION (chỉ flyway-core
+	// thôi thì Flyway không tự chạy). flyway-database-postgresql cho dialect Postgres.
+	implementation 'org.springframework.boot:spring-boot-flyway'
+	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.mapstruct:mapstruct:1.6.3'
 
 	compileOnly 'org.projectlombok:lombok'

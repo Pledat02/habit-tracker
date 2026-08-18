@@ -49,6 +49,10 @@ public class Users {
     @Builder.Default
     private Role role = Role.USER;
 
+    /** IANA timezone id (vd 'Asia/Ho_Chi_Minh'). Null -> code fallback default timezone.
+     *  Dùng để tính "hôm nay" theo giờ user, không phải giờ server. Cột: zone_id (V2 migration). */
+    private String zoneId;
+
     @OneToMany(mappedBy = "user")
     private List<UserAchivement> achivements;
 

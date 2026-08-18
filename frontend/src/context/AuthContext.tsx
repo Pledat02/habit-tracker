@@ -49,7 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(
     async (_name: string, email: string, password: string) => {
       // Không gửi username: backend tự sinh từ email khi bỏ trống (UserService.createUser).
-      await api.post('/auth/register', { username: null, email: email.trim(), password });
+      // Gửi timezone của trình duyệt để streak tính "hôm nay" theo giờ user (không phải giờ server).
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      await api.post('/auth/register', { username: null, email: email.trim(), password, timezone });
       // Đăng ký xong thì đăng nhập ngay bằng chính thông tin vừa tạo.
       await login(email, password);
     },

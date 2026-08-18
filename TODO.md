@@ -23,8 +23,8 @@
 ## 🔴 P0 — làm trước khi coi là "production-ready"
 
 - [ ] **Rotate mật khẩu DB Supabase** — mật khẩu cũ từng nằm plaintext (file/git/chat) → coi như đã lộ, phải đổi + cập nhật `secrets.properties`.
-- [ ] **Thay `ddl-auto: update` bằng Flyway (hoặc Liquibase)** — schema có version, review được, rollback được; `update` tự đổi DB là rủi ro mất dữ liệu.
-- [ ] **Lưu timezone của user + tính "hôm nay" theo timezone đó** — `StreakCalculator` đang dùng `LocalDate.now()` = giờ server (UTC) → streak sai với user khác múi giờ. Cũng là tiền đề bắt buộc cho tính năng nhắc nhở.
+- [x] **Thay `ddl-auto: update` bằng Flyway** — `ddl-auto: validate` + Flyway baseline (V1 = schema hiện tại, V2 = thêm zone_id). DB cũ được baseline không mất data; DB mới chạy từ đầu. ✅
+- [x] **Lưu timezone của user + tính "hôm nay" theo timezone đó** — thêm cột `zone_id`, `AchievementEngine` tính streak theo `LocalDate.now(userZone)`, frontend gửi timezone lúc đăng ký, fallback `app.default-timezone`. ✅
 
 ## 🟠 P1 — nợ kỹ thuật thật
 
