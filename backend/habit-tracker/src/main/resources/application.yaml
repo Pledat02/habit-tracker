@@ -64,3 +64,10 @@ app:
     # Origin DUY NHẤT được phép gọi API kèm cookie (CORS). KHÔNG được để "*" vì
     # trình duyệt chặn credentials:'include' đi kèm wildcard origin.
     frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+    # Chống brute-force endpoint auth: token bucket theo IP. capacity = số lần cho phép dồn;
+    # refill-per-minute = tốc độ hồi. Mặc định 5 lần, hồi 5/phút (~1 lần mỗi 12s).
+    rate-limit:
+        auth:
+            capacity: ${AUTH_RATE_CAPACITY:5}
+            refill-per-minute: ${AUTH_RATE_REFILL_PER_MINUTE:5}
+        cleanup-ms: ${RATE_LIMIT_CLEANUP_MS:600000}
