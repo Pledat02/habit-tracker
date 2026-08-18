@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { AppShell } from '@/components/layout/AppShell';
 import { Auth } from '@/pages/Auth';
+import { OAuth2Callback } from '@/pages/OAuth2Callback';
 import { Onboarding, ONBOARDING_KEY } from '@/pages/Onboarding';
 import { Dashboard } from '@/pages/Dashboard';
 import { HabitsList } from '@/pages/HabitsList';
@@ -35,6 +36,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/auth" element={user && !loading ? <Navigate to="/" replace /> : <Auth />} />
+      <Route path="/oauth2/callback" element={<OAuth2Callback />} />
       <Route
         path="/onboarding"
         element={loading ? <FullScreenLoader /> : user ? <Onboarding /> : <Navigate to="/auth" replace />}

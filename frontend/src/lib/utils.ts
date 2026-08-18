@@ -5,10 +5,6 @@ export function cn(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(' ');
 }
 
-export function uid(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
-
 /** Local-date 'YYYY-MM-DD' (avoids UTC off-by-one from toISOString). */
 export function toDateKey(d: Date = new Date()): string {
   const y = d.getFullYear();
@@ -53,20 +49,57 @@ export function frequencyLabel(raw: string): string {
   return 'Hàng ngày';
 }
 
+/** Số lần/tuần cần đạt với habit dạng "N lần/tuần"; null nếu không phải loại đó. */
+export function weeklyTargetOf(frequency: string): number | null {
+  const f = parseFrequency(frequency);
+  if (f === 'weekly_3') return 3;
+  if (f === 'weekly_5') return 5;
+  return null;
+}
+
+/** Đơn vị hiển thị streak: habit "N lần/tuần" đếm theo TUẦN, còn lại theo NGÀY. */
+export function streakUnit(frequency: string): 'ngày' | 'tuần' {
+  return weeklyTargetOf(frequency) != null ? 'tuần' : 'ngày';
+}
+
+/** Khoá tuần = ngày thứ Hai đầu tuần chứa `d` (YYYY-MM-DD), để gom check-in theo tuần. */
+function weekKey(d: Date): string {
+  const c = new Date(d);
+  const mondayOffset = (c.getDay() + 6) % 7; // CN=6, T2=0 ... T7=5
+  c.setDate(c.getDate() - mondayOffset);
+  return toDateKey(c);
+}
+
+/** Đếm số check-in mỗi tuần cho 1 habit. */
+function checkinsPerWeek(habit: Habit, checkins: Checkin[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const c of checkins) {
+    if (c.habitId !== habit.id) continue;
+    const wk = weekKey(parseDateKey(c.date));
+    counts.set(wk, (counts.get(wk) ?? 0) + 1);
+  }
+  return counts;
+}
+
 /** Is this habit scheduled to be done on the given date? */
 export function isScheduledOn(habit: Habit, date: Date): boolean {
   const f = parseFrequency(habit.frequency);
+  // "N lần/tuần": linh hoạt, có thể làm bất kỳ ngày nào -> luôn hiện ở danh sách hôm nay.
   if (f === 'daily' || f === 'weekly_3' || f === 'weekly_5') return true;
   if (typeof f === 'object' && f.type === 'days') return f.days.includes(date.getDay());
   return true;
 }
 
 /**
- * Current consecutive streak (in scheduled days) up to today.
- * Counts back from today while each scheduled day has a check-in.
- * Today not being done yet does not break the streak.
+ * Streak hiện tại. Đơn vị tuỳ tần suất:
+ * - "N lần/tuần": số TUẦN liên tiếp đạt đủ N lần check-in. Tuần hiện tại chưa đủ
+ *   nhưng chưa hết tuần thì KHÔNG tính đứt (mirror "hôm nay chưa làm không đứt streak").
+ * - còn lại: số NGÀY-có-lịch liên tiếp có check-in.
  */
 export function currentStreak(habit: Habit, checkins: Checkin[]): number {
+  const target = weeklyTargetOf(habit.frequency);
+  if (target != null) return currentWeeklyStreak(habit, checkins, target);
+
   const done = new Set(checkins.filter((c) => c.habitId === habit.id).map((c) => c.date));
   let streak = 0;
   const cursor = new Date();
@@ -87,7 +120,29 @@ export function currentStreak(habit: Habit, checkins: Checkin[]): number {
   return streak;
 }
 
+function currentWeeklyStreak(habit: Habit, checkins: Checkin[], target: number): number {
+  const counts = checkinsPerWeek(habit, checkins);
+  let streak = 0;
+  const cursor = new Date();
+  const thisWeek = weekKey(cursor);
+  // ~2 năm = 104 tuần làm cận an toàn.
+  for (let i = 0; i < 104; i++) {
+    const wk = weekKey(cursor);
+    const count = counts.get(wk) ?? 0;
+    if (count >= target) {
+      streak++;
+    } else if (wk !== thisWeek) {
+      break; // tuần trong quá khứ không đủ số lần -> đứt streak
+    }
+    cursor.setDate(cursor.getDate() - 7);
+  }
+  return streak;
+}
+
 export function longestStreak(habit: Habit, checkins: Checkin[]): number {
+  const target = weeklyTargetOf(habit.frequency);
+  if (target != null) return longestWeeklyStreak(habit, checkins, target);
+
   const dates = checkins
     .filter((c) => c.habitId === habit.id)
     .map((c) => c.date)
@@ -103,6 +158,28 @@ export function longestStreak(habit: Habit, checkins: Checkin[]): number {
       run++;
       best = Math.max(best, run);
     } else if (diff > 1) {
+      run = 1;
+    }
+  }
+  return best;
+}
+
+function longestWeeklyStreak(habit: Habit, checkins: Checkin[], target: number): number {
+  const metWeeks = [...checkinsPerWeek(habit, checkins).entries()]
+    .filter(([, n]) => n >= target)
+    .map(([wk]) => wk)
+    .sort();
+  if (metWeeks.length === 0) return 0;
+  let best = 1;
+  let run = 1;
+  for (let i = 1; i < metWeeks.length; i++) {
+    const prev = parseDateKey(metWeeks[i - 1]);
+    const cur = parseDateKey(metWeeks[i]);
+    const diffWeeks = Math.round((cur.getTime() - prev.getTime()) / (7 * 86400000));
+    if (diffWeeks === 1) {
+      run++;
+      best = Math.max(best, run);
+    } else if (diffWeeks > 1) {
       run = 1;
     }
   }

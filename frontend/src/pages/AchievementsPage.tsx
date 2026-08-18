@@ -22,8 +22,9 @@ export function AchievementsPage() {
   const byHabit = useMemo(() => {
     const map = new Map<string, Map<number, Achievement>>();
     for (const a of achievements ?? []) {
+      if (!a.habitId || a.milestone == null) continue; // bỏ qua thành tựu account-level / không xác định được mốc
       if (!map.has(a.habitId)) map.set(a.habitId, new Map());
-      map.get(a.habitId)!.set(Number(a.milestone), a);
+      map.get(a.habitId)!.set(a.milestone, a);
     }
     return map;
   }, [achievements]);

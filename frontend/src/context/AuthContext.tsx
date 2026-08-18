@@ -1,8 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { User } from '@/lib/types';
 import { usersApi } from '@/lib/resources';
-import { api } from '@/lib/apiClient';
-import { clearToken, getToken, setToken } from '@/lib/apiClient';
+import { api, clearToken, googleLoginUrl, refreshAccessToken, setToken } from '@/lib/apiClient';
 
 interface AuthCtx {
   user: User | null;
@@ -12,86 +11,71 @@ interface AuthCtx {
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   updateUser: (patch: Partial<User>) => Promise<void>;
+  /** Dùng bởi trang /oauth2/callback: nhận token backend đã redirect kèm theo, hoàn tất đăng nhập Google. */
+  completeGoogleLogin: (token: string) => Promise<void>;
 }
 
 const Ctx = createContext<AuthCtx | null>(null);
-const USER_KEY = 'ht-user-id';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore session on load.
-  // TODO: thay bằng JWT auth thật từ Spring Boot — verify token qua /auth/me.
+  // Restore session on load. Access token sống trong RAM nên MẤT sau F5 — thử đổi
+  // lại bằng refresh token (cookie HttpOnly, trình duyệt tự gửi kèm), rồi lấy
+  // profile thật qua GET /users/me (xác định user bằng chính token vừa có).
   useEffect(() => {
-    const token = getToken();
-    const userId = localStorage.getItem(USER_KEY);
-    if (token && userId) {
-      usersApi
-        .get(userId)
-        .then((u) => setUser(u))
-        .catch(() => {
-          clearToken();
-          localStorage.removeItem(USER_KEY);
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    refreshAccessToken()
+      .then((token) => {
+        if (!token) return;
+        return usersApi.me().then((u) => setUser(u));
+      })
+      .catch(() => clearToken())
+      .finally(() => setLoading(false));
   }, []);
 
-  const persist = useCallback((u: User) => {
-    // Mock JWT — a fake token so the client "has a session".
-    setToken(`mock.${u.id}`);
-    localStorage.setItem(USER_KEY, u.id);
-    setUser(u);
+  const login = useCallback(async (email: string, password: string) => {
+    // Backend chỉ nhận field tên "username" nhưng CHẤP NHẬN cả username lẫn email
+    // (xem AuthenticationService.authenticate) — form ở đây thu email, gửi thẳng vào đó.
+    const res = await api.post<{ token: string }>('/auth/login', {
+      username: email.trim(),
+      password,
+    });
+    setToken(res.token);
+    const me = await usersApi.me();
+    setUser(me);
   }, []);
-
-  const login = useCallback(
-    async (email: string, password: string) => {
-      // TODO: thay bằng JWT auth thật — POST /auth/login rồi lưu token trả về.
-      const matches = await usersApi.list({ email: email.trim().toLowerCase() });
-      const found = matches.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-      if (!found) throw new Error('Email chưa được đăng ký');
-      if ((found.password ?? '') !== password) throw new Error('Mật khẩu không đúng');
-      persist(found);
-    },
-    [persist],
-  );
 
   const register = useCallback(
-    async (name: string, email: string, password: string) => {
-      const normalized = email.trim().toLowerCase();
-      const existing = await usersApi.list({ email: normalized });
-      if (existing.some((u) => u.email.toLowerCase() === normalized)) {
-        throw new Error('Email này đã được sử dụng');
-      }
-      const created = await api.post<User>('/users', {
-        name: name.trim(),
-        email: normalized,
-        password,
-        avatar: '',
-      });
-      persist(created);
+    async (_name: string, email: string, password: string) => {
+      // Không gửi username: backend tự sinh từ email khi bỏ trống (UserService.createUser).
+      // Gửi timezone của trình duyệt để streak tính "hôm nay" theo giờ user (không phải giờ server).
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      await api.post('/auth/register', { username: null, email: email.trim(), password, timezone });
+      // Đăng ký xong thì đăng nhập ngay bằng chính thông tin vừa tạo.
+      await login(email, password);
     },
-    [persist],
+    [login],
   );
 
+  const completeGoogleLogin = useCallback(async (token: string) => {
+    setToken(token);
+    const me = await usersApi.me();
+    setUser(me);
+  }, []);
+
   const loginWithGoogle = useCallback(async () => {
-    // TODO: thay bằng OAuth Google thật qua Spring Boot.
-    // Demo: dùng/khởi tạo một tài khoản Google giả lập.
-    const email = 'google.user@habit.app';
-    const existing = await usersApi.list({ email });
-    const found = existing.find((u) => u.email === email);
-    const u =
-      found ??
-      (await api.post<User>('/users', { name: 'Google User', email, password: '', avatar: '' }));
-    persist(u);
-  }, [persist]);
+    // Rời hẳn SPA để sang trang login Google — quay lại qua /oauth2/callback?token=...
+    // (route đó gọi completeGoogleLogin). Promise này không bao giờ resolve vì trang đã điều hướng đi.
+    window.location.href = googleLoginUrl();
+  }, []);
 
   const logout = useCallback(() => {
+    // Cookie refresh_token là HttpOnly -> JS không tự xoá được, PHẢI nhờ server
+    // (Set-Cookie Max-Age=0) + revoke ở DB. Thiếu bước này, "đăng xuất" chỉ là
+    // giả — cookie cũ vẫn còn hiệu lực. Best-effort: không chặn logout khi lỗi mạng.
+    api.post('/auth/logout', undefined).catch(() => {});
     clearToken();
-    localStorage.removeItem(USER_KEY);
     setUser(null);
   }, []);
 
@@ -105,8 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<AuthCtx>(
-    () => ({ user, loading, login, loginWithGoogle, register, logout, updateUser }),
-    [user, loading, login, loginWithGoogle, register, logout, updateUser],
+    () => ({ user, loading, login, loginWithGoogle, register, logout, updateUser, completeGoogleLogin }),
+    [user, loading, login, loginWithGoogle, register, logout, updateUser, completeGoogleLogin],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

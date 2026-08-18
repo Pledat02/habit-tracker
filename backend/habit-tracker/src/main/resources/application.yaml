@@ -1,0 +1,66 @@
+spring:
+    application:
+        name: habit-tracker
+
+    # Nạp secrets từ file gitignored (secrets.properties) HOẶC biến môi trường.
+    # 'optional:' -> không có file cũng không sao (vd khi dùng env trên server).
+    config:
+        import: optional:file:./secrets.properties
+
+    datasource:
+        url: ${DB_URL:jdbc:postgresql://db.fqvexwqafzdunvyvdzhx.supabase.co:5432/postgres?sslmode=require}
+        username: ${DB_USERNAME:postgres}
+        password: ${DB_PASSWORD}
+        driver-class-name: org.postgresql.Driver
+
+    jpa:
+        hibernate:
+            # Flyway sở hữu schema giờ. validate: Hibernate CHỈ kiểm entity khớp DB,
+            # KHÔNG tự đổi (an toàn hơn update rất nhiều).
+            ddl-auto: validate
+        show-sql: true
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.PostgreSQLDialect
+
+    flyway:
+        # DB Supabase hiện tại đã có sẵn schema (do ddl-auto:update cũ tạo) nhưng chưa có
+        # bảng lịch sử flyway -> baseline-on-migrate đánh dấu nó ở V1 (bỏ qua V1), rồi chạy V2+.
+        # DB MỚI (rỗng) sẽ chạy toàn bộ từ V1.
+        baseline-on-migrate: true
+        baseline-version: 1
+
+    security:
+        oauth2:
+            client:
+                registration:
+                    google:
+                        client-id: ${GOOGLE_CLIENT_ID}
+                        client-secret: ${GOOGLE_CLIENT_SECRET}
+                        scope: openid,email,profile
+                        # redirect_uri mặc định của Spring Security: /login/oauth2/code/google
+                        # -> phải khai đúng URI này trong Google Cloud Console.
+
+# Token ký RSA (khóa sinh runtime ở KeyConfig) — không còn secret đối xứng.
+jwt:
+    # Thời hạn access token (giây) — mặc định 1 giờ.
+    validDuration: ${JWT_VALID_DURATION:3600}
+    # Thời hạn refresh token (giây) — mặc định 30 ngày. Refresh token lưu ở DB (hash), không phải JWT.
+    refreshValidDuration: ${JWT_REFRESH_VALID_DURATION:2592000}
+
+app:
+    # Timezone mặc định khi user chưa đặt (streak tính "hôm nay" theo giờ này).
+    default-timezone: ${DEFAULT_TIMEZONE:Asia/Ho_Chi_Minh}
+    # Web Push: private key BẮT BUỘC bí mật (secrets.properties/env). Rỗng -> tính năng push tắt.
+    push:
+        vapid-public-key: ${VAPID_PUBLIC_KEY:}
+        vapid-private-key: ${VAPID_PRIVATE_KEY:}
+        vapid-subject: ${VAPID_SUBJECT:mailto:admin@habit-tracker.local}
+    # Nơi frontend nhận lại token sau khi đăng nhập Google xong (backend redirect tới đây kèm ?token=...).
+    frontend-oauth2-redirect-uri: ${FRONTEND_OAUTH2_REDIRECT_URI:http://localhost:5173/oauth2/callback}
+    # Secure=true đòi HTTPS (localhost qua http vẫn được các trình duyệt hiện đại chấp nhận).
+    # Đặt false CHỈ khi test qua http trên domain khác localhost — không dùng ở production.
+    cookie-secure: ${COOKIE_SECURE:true}
+    # Origin DUY NHẤT được phép gọi API kèm cookie (CORS). KHÔNG được để "*" vì
+    # trình duyệt chặn credentials:'include' đi kèm wildcard origin.
+    frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}

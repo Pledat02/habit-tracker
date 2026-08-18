@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { CheckCircle2, Info, X, AlertTriangle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -67,26 +68,33 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         aria-live="polite"
         aria-atomic="true"
       >
-        {toasts.map((t) => {
-          const Icon = ICONS[t.kind];
-          return (
-            <div
-              key={t.id}
-              role="status"
-              className="pointer-events-auto flex w-full max-w-sm animate-slide-up items-start gap-3 rounded-xl border border-border bg-surface p-3.5 shadow-soft-lg"
-            >
-              <Icon className={cn('mt-0.5 h-5 w-5 shrink-0', ACCENT[t.kind])} aria-hidden />
-              <p className="flex-1 text-sm text-foreground">{t.message}</p>
-              <button
-                onClick={() => dismiss(t.id)}
-                className="focus-ring -m-1 rounded-md p-1 text-muted hover:text-foreground"
-                aria-label="Đóng thông báo"
+        <AnimatePresence initial={false}>
+          {toasts.map((t) => {
+            const Icon = ICONS[t.kind];
+            return (
+              <motion.div
+                key={t.id}
+                layout
+                role="status"
+                className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border border-border bg-surface p-3.5 shadow-soft-lg"
+                initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15 } }}
+                transition={{ type: 'spring', stiffness: 420, damping: 32 }}
               >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          );
-        })}
+                <Icon className={cn('mt-0.5 h-5 w-5 shrink-0', ACCENT[t.kind])} aria-hidden />
+                <p className="flex-1 text-sm text-foreground">{t.message}</p>
+                <button
+                  onClick={() => dismiss(t.id)}
+                  className="focus-ring -m-1 rounded-md p-1 text-muted hover:text-foreground"
+                  aria-label="Đóng thông báo"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
     </Ctx.Provider>
   );
