@@ -48,7 +48,7 @@
 ## 🚀 Tính năng đề xuất
 
 - [x] **Nhắc nhở — Web Push** ✅ — VAPID + `WebPushService` + `ReminderScheduler` (mỗi phút, theo timezone user, bỏ qua habit paused/đã check-in) + service worker + toggle ở Profile. (Email nhắc nhở: để sau nếu cần.)
-- [ ] **Đồng bộ Google Calendar** — xin thêm scope `calendar.events` (incremental auth) + offline access; tạo recurring event `RRULE` map từ `frequency`; lưu Google refresh token vào `oauth_accounts`.
+- [x] **Đồng bộ Google Calendar (1 chiều)** — sau feature flag `app.google-calendar.enabled`. Incremental auth (scope calendar.events, offline) qua state HMAC-signed; refresh token lưu bảng `google_calendar_connections`; `RRuleBuilder` map frequency→RRULE (+6 test); event id lưu trên habit; sync tạo/cập nhật/xoá event theo create/update/delete/pause (best-effort). FE: mục Kết nối Calendar ở Profile (tự ẩn khi flag tắt). Cần bật Google Cloud (Calendar API + scope + redirect-uri) để chạy thật. ✅
 - [ ] **Hoàn thiện Streak Freeze** — UI đã có toggle, chưa có logic "đóng băng" streak khi lỡ 1 ngày.
 - [ ] **Social / leaderboard** — mở rộng từ share card đã có.
 

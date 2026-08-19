@@ -45,7 +45,8 @@ public class SecurityConfig {
             "/oauth2/authorization/**", // bước 1: bắt đầu redirect sang Google
             "/login/oauth2/code/**", // bước 2: Google redirect callback về đây
             "/actuator/health", // health cho load balancer/uptime: công khai, không lộ chi tiết
-            "/actuator/health/**"
+            "/actuator/health/**",
+            "/api/v1/calendar/callback" // Google redirect về (không có Bearer) — xác thực qua state đã ký
             // metrics/khác dưới /actuator vẫn đòi token (rơi vào anyRequest().authenticated()).
     };
 

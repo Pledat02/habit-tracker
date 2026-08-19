@@ -29,9 +29,10 @@ class HabitServiceOwnershipTest {
     private final UserRepository userRepository = mock(UserRepository.class);
     private final IconHabitRepository iconHabitRepository = mock(IconHabitRepository.class);
     private final HabitMapper habitMapper = mock(HabitMapper.class);
+    private final GoogleCalendarService googleCalendarService = mock(GoogleCalendarService.class);
 
-    private final HabitService service =
-            new HabitService(habitRepository, userRepository, iconHabitRepository, habitMapper);
+    private final HabitService service = new HabitService(
+            habitRepository, userRepository, iconHabitRepository, habitMapper, googleCalendarService);
 
     private static final long OWNER = 1L;
     private static final long ATTACKER = 999L;

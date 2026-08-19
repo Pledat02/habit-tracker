@@ -26,6 +26,9 @@ public enum ErrorCode {
     RATE_LIMITED(429, "Too many requests, please try again later", HttpStatus.TOO_MANY_REQUESTS),
     RESET_TOKEN_INVALID(400, "Invalid or expired reset token", HttpStatus.BAD_REQUEST),
     VERIFICATION_TOKEN_INVALID(400, "Invalid or expired verification token", HttpStatus.BAD_REQUEST),
+    CALENDAR_DISABLED(503, "Google Calendar sync is not enabled", HttpStatus.SERVICE_UNAVAILABLE),
+    CALENDAR_STATE_INVALID(400, "Invalid Google Calendar authorization state", HttpStatus.BAD_REQUEST),
+    CALENDAR_AUTH_FAILED(502, "Failed to connect Google Calendar", HttpStatus.BAD_GATEWAY),
     ;
 
     private final int code;

@@ -41,6 +41,19 @@ export const authApi = {
   resendVerification: (email: string) => api.post<void>('/auth/email/resend', { email }),
 };
 
+// ------------------------- Google Calendar (1 chiều) ---------------------------
+
+export const calendarApi = {
+  /** Tính năng có bật không (flag) + user đã kết nối chưa. */
+  status: () => api.get<{ enabled: boolean; connected: boolean }>('/api/v1/calendar/status'),
+  /** Lấy URL để chuyển hướng user sang Google cấp quyền Calendar. */
+  authorizeUrl: () => api.get<{ url: string }>('/api/v1/calendar/authorize').then((r) => r.url),
+  /** Ngắt kết nối Calendar. */
+  disconnect: () => api.post<void>('/api/v1/calendar/disconnect', {}),
+  /** Đẩy toàn bộ habit hiện có lên Calendar. */
+  sync: () => api.post<void>('/api/v1/calendar/sync', {}),
+};
+
 // ------------------------- Habits --------------------------------------------
 
 /** HabitResponse bên Spring Boot: icon là 2 field phẳng (icon/iconColor), không phải entity lồng. */

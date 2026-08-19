@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { cn, initials } from '@/lib/utils';
 import { disablePush, enablePush, isPushEnabled, isPushSupported } from '@/lib/push';
+import { GoogleCalendarSettings } from '@/components/GoogleCalendarSettings';
 
 export function Profile() {
   const { user, logout, updateUser } = useAuth();
@@ -153,6 +154,9 @@ export function Profile() {
           />
         </div>
       </section>
+
+      {/* Google Calendar — tự ẩn nếu backend chưa bật flag */}
+      <GoogleCalendarSettings />
 
       {/* Logout — separated, destructive confirm */}
       <section className="card p-5">

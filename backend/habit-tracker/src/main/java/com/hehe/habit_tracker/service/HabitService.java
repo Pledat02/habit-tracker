@@ -40,13 +40,16 @@ public class HabitService {
     UserRepository userRepository;
     IconHabitRepository iconHabitRepository;
     HabitMapper habitMapper;
+    GoogleCalendarService googleCalendarService;
 
     public HabitResponse createHabit(HabitCreationRequest request, Long userId) {
         Habit habit = habitMapper.toHabit(request);
         // getReferenceById: proxy chỉ mang id, đủ để gán FK user_id khi lưu — KHÔNG SELECT users.
         habit.setUser(userRepository.getReferenceById(userId));
         applyIcon(habit, request.icon(), request.iconColor());
-        return habitMapper.toHabitResponse(habitRepository.save(habit));
+        Habit saved = habitRepository.save(habit);
+        googleCalendarService.syncHabit(saved); // best-effort, no-op nếu flag tắt / chưa kết nối
+        return habitMapper.toHabitResponse(saved);
     }
 
     public List<HabitResponse> getAllHabits(Long userId) {
@@ -67,11 +70,14 @@ public class HabitService {
         if (request.icon() != null || request.iconColor() != null) {
             applyIcon(habit, request.icon(), request.iconColor());
         }
-        return habitMapper.toHabitResponse(habitRepository.save(habit));
+        Habit saved = habitRepository.save(habit);
+        googleCalendarService.syncHabit(saved); // cập nhật/tạo/xoá event theo trạng thái mới
+        return habitMapper.toHabitResponse(saved);
     }
 
     public void deleteHabit(Long id, Long userId) {
         Habit habit = ownedHabit(id, userId);
+        googleCalendarService.deleteEventForHabit(habit); // xoá event trước khi mất dòng habit
         habitRepository.delete(habit);
     }
 
