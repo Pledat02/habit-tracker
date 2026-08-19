@@ -12,12 +12,13 @@ interface BackendUser {
   username: string;
   email: string;
   role: string;
+  emailVerified: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 function toUser(u: BackendUser): User {
-  return { id: String(u.id), name: u.username, email: u.email, avatar: '' };
+  return { id: String(u.id), name: u.username, email: u.email, avatar: '', emailVerified: u.emailVerified };
 }
 
 export const usersApi = {
@@ -34,6 +35,10 @@ export const authApi = {
   /** Đặt lại mật khẩu bằng token nhận trong email. */
   resetPassword: (token: string, newPassword: string) =>
     api.post<void>('/auth/password/reset', { token, newPassword }),
+  /** Xác thực email bằng token trong link gửi lúc đăng ký. */
+  verifyEmail: (token: string) => api.post<void>('/auth/email/verify', { token }),
+  /** Gửi lại email xác thực. */
+  resendVerification: (email: string) => api.post<void>('/auth/email/resend', { email }),
 };
 
 // ------------------------- Habits --------------------------------------------

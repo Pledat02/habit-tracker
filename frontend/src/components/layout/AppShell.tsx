@@ -5,6 +5,7 @@ import { CheckCircle2, Plus, Trophy } from 'lucide-react';
 import { NAV_ITEMS } from './nav';
 import { cn } from '@/lib/utils';
 import { HabitFormModal } from '@/components/HabitFormModal';
+import { VerifyEmailBanner } from '@/components/VerifyEmailBanner';
 
 /** Responsive shell: fixed left sidebar on desktop, bottom nav on mobile,
  *  plus a floating create button. */
@@ -70,6 +71,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Main column */}
       <div className="lg:pl-64">
         <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-5 sm:px-6 lg:pb-10 lg:pt-8">
+          <VerifyEmailBanner />
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

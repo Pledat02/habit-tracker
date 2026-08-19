@@ -104,3 +104,7 @@ app:
     password-reset:
         token-ttl-seconds: ${PASSWORD_RESET_TTL_SECONDS:1800}
         link-base: ${PASSWORD_RESET_LINK_BASE:${app.frontend-origin}/reset-password}
+    # Xác thực email: token hạn 24 giờ; link-base là trang FE nhận token.
+    email-verification:
+        token-ttl-seconds: ${EMAIL_VERIFY_TTL_SECONDS:86400}
+        link-base: ${EMAIL_VERIFY_LINK_BASE:${app.frontend-origin}/verify-email}

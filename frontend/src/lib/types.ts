@@ -6,6 +6,8 @@ export interface User {
   name: string;
   email: string;
   avatar: string;
+  /** Email đã xác thực chưa (backend trả trong /users/me). Undefined ở dữ liệu mock cũ. */
+  emailVerified?: boolean;
   // Note: password only exists in the mock/MockAPI "users" resource for fake login.
   // Real backend never returns this.
   password?: string;

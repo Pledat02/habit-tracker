@@ -77,9 +77,11 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         // logic với UserService.createUser khi đăng ký thường không có username).
         String seed = email != null ? email.substring(0, email.indexOf('@')) : name;
         // Không set password: tài khoản này chỉ đăng nhập qua Google.
+        // emailVerified=true: email đã được Google xác minh, không cần bước verify của app.
         Users user = Users.builder()
                 .username(userService.generateUniqueUsername(seed))
                 .email(email)
+                .emailVerified(true)
                 .build();
         user = userRepository.save(user);
 

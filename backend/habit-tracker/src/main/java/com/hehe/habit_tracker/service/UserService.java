@@ -27,6 +27,7 @@ public class UserService {
     UserRepository userRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    EmailVerificationService emailVerificationService;
 
     public UserCreationResponse createUser(UserCreationRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -60,7 +61,10 @@ public class UserService {
         } else {
             user.setRole(Role.USER);
         }
-        return userMapper.toUserCreationResponse(userRepository.save(user));
+        Users saved = userRepository.save(user);
+        // Gửi email xác thực (best-effort — EmailService nuốt lỗi SMTP, không chặn đăng ký).
+        emailVerificationService.sendVerification(saved);
+        return userMapper.toUserCreationResponse(saved);
     }
 
     public List<UserCreationResponse> getAllUsers() {

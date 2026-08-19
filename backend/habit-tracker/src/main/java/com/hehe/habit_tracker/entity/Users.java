@@ -49,6 +49,11 @@ public class Users {
     @Builder.Default
     private Role role = Role.USER;
 
+    /** Email đã xác thực chưa (V8). User đăng ký mới = false tới khi bấm link xác thực;
+     *  user cũ + đăng nhập Google = true. Không chặn đăng nhập, chỉ để hiển thị/nhắc. */
+    @Builder.Default
+    private boolean emailVerified = false;
+
     /** IANA timezone id (vd 'Asia/Ho_Chi_Minh'). Null -> code fallback default timezone.
      *  Dùng để tính "hôm nay" theo giờ user, không phải giờ server. Cột: zone_id (V2 migration). */
     private String zoneId;

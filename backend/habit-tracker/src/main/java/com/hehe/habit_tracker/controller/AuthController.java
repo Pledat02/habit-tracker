@@ -11,11 +11,14 @@ import com.hehe.habit_tracker.common.BaseController;
 import com.hehe.habit_tracker.config.RefreshCookieUtil;
 import com.hehe.habit_tracker.dto.request.AuthenticationRequest;
 import com.hehe.habit_tracker.dto.request.ForgotPasswordRequest;
+import com.hehe.habit_tracker.dto.request.ResendVerificationRequest;
 import com.hehe.habit_tracker.dto.request.ResetPasswordRequest;
 import com.hehe.habit_tracker.dto.request.UserCreationRequest;
+import com.hehe.habit_tracker.dto.request.VerifyEmailRequest;
 import com.hehe.habit_tracker.dto.response.AuthenticationResponse;
 import com.hehe.habit_tracker.dto.response.UserCreationResponse;
 import com.hehe.habit_tracker.service.AuthenticationService;
+import com.hehe.habit_tracker.service.EmailVerificationService;
 import com.hehe.habit_tracker.service.PasswordResetService;
 import com.hehe.habit_tracker.service.UserService;
 
@@ -35,6 +38,7 @@ public class AuthController extends BaseController<AuthenticationResponse> {
     AuthenticationService authenticationService;
     UserService userService;
     PasswordResetService passwordResetService;
+    EmailVerificationService emailVerificationService;
 
     // Kiểu trả về (UserCreationResponse) khác T của base nên dùng ApiResponse trực tiếp,
     // giống cách các endpoint trả List ở những controller khác.
@@ -85,6 +89,20 @@ public class AuthController extends BaseController<AuthenticationResponse> {
     @PostMapping("/password/reset")
     public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         passwordResetService.confirmReset(request.token(), request.newPassword());
+        return ApiResponse.success(null, 200);
+    }
+
+    /** Xác thực email bằng token trong link gửi qua email lúc đăng ký. */
+    @PostMapping("/email/verify")
+    public ApiResponse<Void> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        emailVerificationService.verify(request.token());
+        return ApiResponse.success(null, 200);
+    }
+
+    /** Gửi lại email xác thực. Luôn trả 200 (không lộ email có tồn tại/đã xác thực hay chưa). */
+    @PostMapping("/email/resend")
+    public ApiResponse<Void> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        emailVerificationService.resend(request.email());
         return ApiResponse.success(null, 200);
     }
 }

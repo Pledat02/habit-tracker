@@ -19,7 +19,8 @@ public class RateLimitConfig {
         FilterRegistrationBean<RateLimitFilter> reg = new FilterRegistrationBean<>();
         reg.setFilter(new RateLimitFilter(rateLimiter));
         reg.addUrlPatterns("/auth/login", "/auth/refresh", "/auth/register",
-                "/auth/password/forgot", "/auth/password/reset");
+                "/auth/password/forgot", "/auth/password/reset",
+                "/auth/email/verify", "/auth/email/resend");
         reg.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return reg;
     }

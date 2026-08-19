@@ -35,7 +35,9 @@ public class SecurityConfig {
             "/auth/refresh",
             "/auth/logout",
             "/auth/password/forgot", // xin link reset (public: user chưa đăng nhập được)
-            "/auth/password/reset" // đặt lại mật khẩu bằng token trong email
+            "/auth/password/reset", // đặt lại mật khẩu bằng token trong email
+            "/auth/email/verify", // xác thực email bằng token (public: bấm từ link email)
+            "/auth/email/resend" // gửi lại email xác thực
     };
     private static final String[] PUBLIC_GET = {
             "/api/v1/achievements/**", // catalog thành tựu: ai xem cũng được

@@ -47,7 +47,13 @@ public class EmailService {
         msg.setTo(to);
         msg.setSubject(subject);
         msg.setText(body);
-        sender.send(msg);
-        log.info("Đã gửi email '{}' tới {}", subject, to);
+        try {
+            sender.send(msg);
+            log.info("Đã gửi email '{}' tới {}", subject, to);
+        } catch (Exception e) {
+            // Gửi email là best-effort: KHÔNG để lỗi SMTP làm rollback đăng ký / reset.
+            // Log lại để chẩn đoán; user vẫn có thể xin gửi lại.
+            log.error("Gửi email '{}' tới {} thất bại: {}", subject, to, e.getMessage());
+        }
     }
 }

@@ -10,6 +10,7 @@ import { ONBOARDING_KEY } from '@/lib/onboarding';
 const Auth = lazy(() => import('@/pages/Auth').then((m) => ({ default: m.Auth })));
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword').then((m) => ({ default: m.ForgotPassword })));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword').then((m) => ({ default: m.ResetPassword })));
+const VerifyEmail = lazy(() => import('@/pages/VerifyEmail').then((m) => ({ default: m.VerifyEmail })));
 const OAuth2Callback = lazy(() => import('@/pages/OAuth2Callback').then((m) => ({ default: m.OAuth2Callback })));
 const Onboarding = lazy(() => import('@/pages/Onboarding').then((m) => ({ default: m.Onboarding })));
 const Dashboard = lazy(() => import('@/pages/Dashboard').then((m) => ({ default: m.Dashboard })));
@@ -46,6 +47,7 @@ export default function App() {
       <Route path="/auth" element={user && !loading ? <Navigate to="/" replace /> : <Auth />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/oauth2/callback" element={<OAuth2Callback />} />
       <Route
         path="/onboarding"
